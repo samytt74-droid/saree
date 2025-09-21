@@ -63,11 +63,13 @@ export function Cart({ isOpen, onClose }: CartProps) {
         customerName: customerInfo.name,
         customerPhone: customerInfo.phone,
         deliveryAddress: selectedLocation.address,
+        customerLocationLat: selectedLocation.lat,
+        customerLocationLng: selectedLocation.lng,
         notes: customerInfo.notes,
         paymentMethod: 'cash',
         items: JSON.stringify(state.items),
         subtotal: state.subtotal,
-        deliveryFee: state.deliveryFee,
+        deliveryFee: calculatedDeliveryFee,
         totalAmount: state.total,
         restaurantId: state.restaurantId
       };
