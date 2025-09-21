@@ -30,7 +30,25 @@ export default function Home() {
 
   const { data: offers, isLoading: offersLoading } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/special-offers'],
+    refetchInterval: 10000, // تحديث العروض كل 10 ثوان
   });
+  
+  // الاستماع للتحديثات المباشرة
+  useEffect(() => {
+    const eventSource = new EventSource('/api/live-updates');
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'restaurants_update' || data.type === 'offers_update') {
+        // إعادة جلب البيانات عند التحديث
+        window.location.reload();
+      }
+    };
+    
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   // Filter restaurants based on selected category
   const filteredRestaurants = restaurants?.filter(restaurant => {

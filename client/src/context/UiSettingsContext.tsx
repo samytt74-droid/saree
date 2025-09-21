@@ -53,6 +53,11 @@ export function UiSettingsProvider({ children }: { children: React.ReactNode }) 
 
       if (response.ok) {
         setSettings(prev => ({ ...prev, [key]: value }));
+        
+        // إشعار المكونات الأخرى بالتغيير
+        window.dispatchEvent(new CustomEvent('uiSettingsChanged', {
+          detail: { key, value }
+        }));
       }
     } catch (error) {
       console.error('خطأ في تحديث الإعداد:', error);

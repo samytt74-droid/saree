@@ -46,8 +46,24 @@ export default function OrderTracking() {
     estimatedTime: '25 دقيقة',
     driverName: 'أحمد محمد',
     driverPhone: '+967771234567',
-    createdAt: new Date(),
+    refetchInterval: 3000, // تحديث كل 3 ثوانِ للحصول على تحديثات أسرع
   });
+  
+  // الاستماع للتحديثات المباشرة
+  useEffect(() => {
+    const eventSource = new EventSource('/api/live-updates');
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'order_update' && data.orderId === orderId) {
+        refetch(); // إعادة جلب البيانات عند التحديث
+      }
+    };
+    
+    return () => {
+      eventSource.close();
+    };
+  }, [orderId, refetch]);
 
   const [orderHistory] = useState<OrderStatus[]>([
     { id: '1', status: 'pending', timestamp: new Date(Date.now() - 30 * 60000), description: 'تم استلام الطلب' },

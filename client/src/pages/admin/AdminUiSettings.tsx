@@ -32,6 +32,8 @@ const settingsConfig: SettingItem[] = [
   { key: 'app_theme', label: 'لون الموضوع', type: 'text', description: 'اللون الأساسي للتطبيق (hex color)', category: 'عام' },
   { key: 'delivery_fee_default', label: 'رسوم التوصيل الافتراضية', type: 'text', description: 'رسوم التوصيل الافتراضية (ريال)', category: 'عام' },
   { key: 'minimum_order_default', label: 'الحد الأدنى للطلب', type: 'text', description: 'الحد الأدنى لقيمة الطلب (ريال)', category: 'عام' },
+  { key: 'delivery_base_fee', label: 'الرسوم الأساسية للتوصيل', type: 'text', description: 'الرسوم الأساسية للتوصيل (ريال)', category: 'توصيل' },
+  { key: 'delivery_price_per_km', label: 'سعر الكيلومتر', type: 'text', description: 'سعر الكيلومتر الواحد للتوصيل (ريال)', category: 'توصيل' },
   
   // Store Settings
   { key: 'opening_time', label: 'وقت الفتح', type: 'text', description: 'وقت فتح المتجر (HH:MM)', category: 'متجر' },

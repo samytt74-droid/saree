@@ -43,30 +43,33 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
     const driverData = localStorage.getItem('driver_user');
     
     if (!token || !driverData) {
+      console.log('❌ لا توجد بيانات تسجيل دخول، إعادة توجيه...');
       window.location.href = '/driver-login';
       return;
     }
 
     try {
       const driver = JSON.parse(driverData);
+      console.log('✅ تم تحميل بيانات السائق:', driver.name);
       setCurrentDriver(driver);
       setDriverStatus(driver.isAvailable);
     } catch (error) {
       console.error('Error parsing driver data:', error);
+      console.log('❌ خطأ في تحليل بيانات السائق، إعادة توجيه...');
       handleLogout();
     }
   }, []);
 
   // جلب الطلبات المتاحة مع تحديث تلقائي
   const { data: availableOrders = [], isLoading: ordersLoading, refetch: refetchOrders } = useQuery<Order[]>({
-    queryKey: ['/api/orders', { status: 'confirmed' }],
+    queryKey: ['/api/orders', { status: 'confirmed', driverId: currentDriver?.id }],
     enabled: !!currentDriver?.id && driverStatus,
     refetchInterval: 5000, // تحديث كل 5 ثوان
   });
 
   // جلب الطلبات الحالية للسائق
   const { data: myOrders = [], refetch: refetchMyOrders } = useQuery<Order[]>({
-    queryKey: ['/api/orders', { driverId: currentDriver?.id }],
+    queryKey: ['/api/orders', { driverId: currentDriver?.id, status: 'on_way,preparing,ready' }],
     enabled: !!currentDriver?.id,
     refetchInterval: 3000,
   });
