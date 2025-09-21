@@ -502,12 +502,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get orders by driverId
   app.get("/api/orders", async (req, res) => {
     try {
-      const { driverId } = req.query;
+      const { driverId, status } = req.query;
       const orders = await storage.getOrders();
       
       if (driverId) {
-        const driverOrders = orders.filter(order => order.driverId === driverId);
+        let driverOrders = orders.filter(order => order.driverId === driverId);
+        
+        // فلترة حسب الحالة إذا تم تحديدها
+        if (status) {
+          const statusArray = (status as string).split(',');
+          driverOrders = driverOrders.filter(order => statusArray.includes(order.status || 'pending'));
+        }
+        
         return res.json(driverOrders);
+      }
+      
+      // إذا لم يكن هناك driverId، فلترة حسب الحالة فقط
+      if (status) {
+        const statusArray = (status as string).split(',');
+        const filteredOrders = orders.filter(order => statusArray.includes(order.status || 'pending'));
+        return res.json(filteredOrders);
       }
       
       res.json(orders);

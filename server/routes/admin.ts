@@ -416,6 +416,20 @@ router.delete("/restaurants/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
+    // حذف عناصر القائمة المرتبطة بالمطعم أولاً
+    const menuItems = await storage.getMenuItems(id);
+    for (const item of menuItems) {
+      await storage.deleteMenuItem(item.id);
+    }
+    
+    // حذف الطلبات المرتبطة بالمطعم (تحويل حالتها إلى cancelled)
+    const restaurantOrders = await storage.getOrdersByRestaurant(id);
+    for (const order of restaurantOrders) {
+      if (order.status !== 'delivered' && order.status !== 'cancelled') {
+        await storage.updateOrder(order.id, { status: 'cancelled' });
+      }
+    }
+    
     const success = await storage.deleteRestaurant(id);
     
     if (!success) {

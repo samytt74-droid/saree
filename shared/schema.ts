@@ -107,6 +107,8 @@ export const orders = pgTable("orders", {
   customerEmail: varchar("customer_email", { length: 100 }),
   customerId: uuid("customer_id").references(() => users.id),
   deliveryAddress: text("delivery_address").notNull(),
+  customerLocationLat: decimal("customer_location_lat", { precision: 10, scale: 8 }),
+  customerLocationLng: decimal("customer_location_lng", { precision: 11, scale: 8 }),
   notes: text("notes"),
   paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
   status: varchar("status", { length: 50 }).default("pending").notNull(),

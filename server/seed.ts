@@ -223,6 +223,18 @@ export async function seedDefaultData() {
         category: "general",
         description: "الحد الأدنى لقيمة الطلب (ريال)"
       },
+      {
+        key: "delivery_base_fee",
+        value: "5",
+        category: "delivery",
+        description: "الرسوم الأساسية للتوصيل (ريال)"
+      },
+      {
+        key: "delivery_price_per_km",
+        value: "2",
+        category: "delivery",
+        description: "سعر الكيلومتر الواحد للتوصيل (ريال)"
+      },
       
       // Store Settings
       {

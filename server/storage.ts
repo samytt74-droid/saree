@@ -587,6 +587,23 @@ async updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promi
 }
 
   async deleteRestaurant(id: string): Promise<boolean> {
+    // حذف عناصر القائمة المرتبطة أولاً
+    const menuItemsToDelete = Array.from(this.menuItems.entries())
+      .filter(([_, item]) => item.restaurantId === id);
+    
+    menuItemsToDelete.forEach(([itemId, _]) => {
+      this.menuItems.delete(itemId);
+    });
+    
+    // تحديث الطلبات المرتبطة (تحويلها إلى cancelled)
+    const ordersToUpdate = Array.from(this.orders.entries())
+      .filter(([_, order]) => order.restaurantId === id);
+    
+    ordersToUpdate.forEach(([orderId, order]) => {
+      const updated = { ...order, status: 'cancelled', restaurantId: null };
+      this.orders.set(orderId, updated);
+    });
+    
     return this.restaurants.delete(id);
   }
 
