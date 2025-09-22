@@ -117,6 +117,9 @@ export interface IStorage {
   createOrderTracking(tracking: {orderId: string; status: string; message: string; createdBy: string; createdByType: string}): Promise<{id: string; orderId: string; status: string; message: string; createdBy: string; createdByType: string; createdAt: Date}>;
   getOrderTracking(orderId: string): Promise<{id: string; orderId: string; status: string; message: string; createdBy: string; createdByType: string; createdAt: Date}[]>;
 
+  // Enhanced notification methods
+  getNotifications(recipientType?: string, recipientId?: string, unread?: boolean): Promise<Notification[]>;
+
   // Search methods
   searchRestaurants(query: string, category?: string): Promise<Restaurant[]>;
   searchCategories(query: string): Promise<Category[]>;
@@ -1017,14 +1020,17 @@ async updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promi
   // تم حذف جميع طرق إدارة الجلسات - لا حاجة لها بعد إزالة نظام المصادقة
 
   // Notification methods
-  async getNotifications(recipientId?: string, type?: string): Promise<Notification[]> {
+  async getNotifications(recipientType?: string, recipientId?: string, unread?: boolean): Promise<Notification[]> {
     let notifications = Array.from(this.notifications.values());
     
+    if (recipientType) {
+      notifications = notifications.filter(n => n.recipientType === recipientType);
+    }
     if (recipientId) {
       notifications = notifications.filter(n => n.recipientId === recipientId);
     }
-    if (type) {
-      notifications = notifications.filter(n => n.type === type);
+    if (unread !== undefined) {
+      notifications = notifications.filter(n => n.isRead === !unread);
     }
     
     return notifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());

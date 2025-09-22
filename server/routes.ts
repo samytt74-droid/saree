@@ -1017,6 +1017,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register orders routes
   app.use("/api/orders", ordersRoutes);
 
+  // Enhanced notifications endpoint
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const { recipientType, recipientId, unread } = req.query;
+      const notifications = await storage.getNotifications(
+        recipientType as string, 
+        recipientId as string, 
+        unread === 'true'
+      );
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  // Mark notification as read
+  app.put("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // For MemStorage, we need to implement this method
+      if (storage.constructor.name === 'MemStorage') {
+        // Simple implementation for memory storage
+        const notifications = await storage.getNotifications();
+        const notification = notifications.find(n => n.id === id);
+        if (notification) {
+          // Update in memory (this is a simplified approach)
+          (notification as any).isRead = true;
+          res.json(notification);
+        } else {
+          res.status(404).json({ message: "Notification not found" });
+        }
+      } else {
+        // For database storage
+        const notification = await (storage as any).markNotificationAsRead(id);
+        if (!notification) {
+          return res.status(404).json({ message: "Notification not found" });
+        }
+        res.json(notification);
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ message: "Failed to update notification" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

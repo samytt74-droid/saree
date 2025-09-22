@@ -283,7 +283,7 @@ export async function seedDefaultData() {
       {
         name: "أحمد محمد السائق",
         phone: "+967771234567",
-        password: "driver123", // كلمة مرور غير مشفرة للاختبار
+        password: "driver123",
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع الزبيري",
@@ -292,7 +292,7 @@ export async function seedDefaultData() {
       {
         name: "علي حسن السائق",
         phone: "+967779876543",
-        password: "driver456",
+        password: "driver123",
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع السبعين",

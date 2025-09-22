@@ -1,7 +1,5 @@
-// orders.ts - الملف المعدل بالكامل
 import express from "express";
 import { storage } from "../storage.js";
-import * as schema from "../../shared/schema.js";
 import { randomUUID } from "crypto";
 
 const router = express.Router();
@@ -14,8 +12,6 @@ router.post("/", async (req, res) => {
       customerPhone,
       customerEmail,
       deliveryAddress,
-      customerLocationLat,
-      customerLocationLng,
       notes,
       paymentMethod,
       items,
@@ -29,24 +25,7 @@ router.post("/", async (req, res) => {
     // التحقق من البيانات المطلوبة
     if (!customerName || !customerPhone || !deliveryAddress || !items || !restaurantId) {
       return res.status(400).json({ 
-        error: "بيانات ناقصة: الاسم، الهاتف، العنوان، العناصر، ومعرف المطعم مطلوبة",
-        received: { 
-          customerName: !!customerName, 
-          customerPhone: !!customerPhone, 
-          deliveryAddress: !!deliveryAddress, 
-          items: !!items, 
-          restaurantId: !!restaurantId 
-        }
-      });
-    }
-
-    // التحقق من صحة معرف المطعم
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(restaurantId)) {
-      return res.status(400).json({ 
-        error: "معرف المطعم غير صحيح", 
-        message: "يجب أن يكون معرف المطعم بصيغة UUID صحيحة",
-        restaurantId 
+        error: "بيانات ناقصة: الاسم، الهاتف، العنوان، العناصر، ومعرف المطعم مطلوبة"
       });
     }
 
@@ -55,8 +34,7 @@ router.post("/", async (req, res) => {
     const restaurant = restaurants.find(r => r.id === restaurantId);
     if (!restaurant) {
       return res.status(400).json({ 
-        error: "المطعم المحدد غير موجود", 
-        restaurantId 
+        error: "المطعم المحدد غير موجود"
       });
     }
 
@@ -69,8 +47,7 @@ router.post("/", async (req, res) => {
       itemsString = typeof items === 'string' ? items : JSON.stringify(items);
     } catch (error) {
       return res.status(400).json({ 
-        error: "تنسيق العناصر غير صحيح",
-        message: "يجب أن تكون العناصر مصفوفة JSON صالحة"
+        error: "تنسيق العناصر غير صحيح"
       });
     }
 
@@ -90,14 +67,14 @@ router.post("/", async (req, res) => {
       deliveryFee: String(deliveryFee || 0),
       total: String(totalAmount || 0),
       totalAmount: String(totalAmount || 0),
-      driverEarnings: "10.00", // قيمة افتراضية
+      driverEarnings: String(Math.round(parseFloat(totalAmount || '0') * 0.15)), // 15% عمولة
       restaurantId,
       estimatedTime: restaurant.deliveryTime || '30-45 دقيقة'
     };
 
     const order = await storage.createOrder(orderData);
 
-    // إنشاء إشعارات
+    // إنشاء إشعارات للجميع
     try {
       // إشعار للمطعم
       await storage.createNotification({
@@ -110,16 +87,19 @@ router.post("/", async (req, res) => {
         isRead: false
       });
       
-      // إشعار للسائقين
-      await storage.createNotification({
-        type: 'new_order',
-        title: 'طلب جديد متاح',
-        message: `طلب جديد متاح للتوصيل من ${restaurant.name}`,
-        recipientType: 'driver',
-        recipientId: null,
-        orderId: order.id,
-        isRead: false
-      });
+      // إشعار لجميع السائقين المتاحين
+      const availableDrivers = await storage.getAvailableDrivers();
+      for (const driver of availableDrivers) {
+        await storage.createNotification({
+          type: 'new_order_available',
+          title: 'طلب جديد متاح للتوصيل',
+          message: `طلب جديد من ${restaurant.name} - ${formatCurrency(totalAmount)} - عمولة ${formatCurrency(Math.round(parseFloat(totalAmount || '0') * 0.15))}`,
+          recipientType: 'driver',
+          recipientId: driver.id,
+          orderId: order.id,
+          isRead: false
+        });
+      }
       
       // إشعار للإدارة
       await storage.createNotification({
@@ -157,19 +137,6 @@ router.post("/", async (req, res) => {
 
   } catch (error: any) {
     console.error("خطأ في إنشاء الطلب:", error);
-    
-    if (error.code === '22P02') {
-      return res.status(400).json({ 
-        error: "معرف المطعم غير صحيح"
-      });
-    }
-    
-    if (error.code === '23503') {
-      return res.status(400).json({ 
-        error: "المطعم المحدد غير موجود"
-      });
-    }
-    
     res.status(500).json({ 
       error: "حدث خطأ في الخادم",
       message: error.message 
@@ -177,7 +144,247 @@ router.post("/", async (req, res) => {
   }
 });
 
-// الحصول على طلبات العميل
+// جلب الطلبات مع فلترة محسنة
+router.get("/", async (req, res) => {
+  try {
+    const { status, driverId, available, restaurantId } = req.query;
+    
+    let orders = await storage.getOrders();
+    
+    // فلترة حسب الحالة
+    if (status && status !== 'all') {
+      orders = orders.filter(order => order.status === status);
+    }
+    
+    // فلترة حسب السائق
+    if (driverId) {
+      orders = orders.filter(order => order.driverId === driverId);
+    }
+    
+    // فلترة الطلبات المتاحة (بدون سائق مُعيَّن)
+    if (available === 'true') {
+      orders = orders.filter(order => 
+        order.status === 'confirmed' && !order.driverId
+      );
+    }
+    
+    // فلترة حسب المطعم
+    if (restaurantId) {
+      orders = orders.filter(order => order.restaurantId === restaurantId);
+    }
+    
+    // ترتيب حسب تاريخ الإنشاء (الأحدث أولاً)
+    orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    res.json(orders);
+  } catch (error) {
+    console.error('خطأ في جلب الطلبات:', error);
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
+// تعيين طلب لسائق
+router.put("/:id/assign-driver", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { driverId } = req.body;
+    
+    if (!driverId) {
+      return res.status(400).json({ error: "معرف السائق مطلوب" });
+    }
+
+    // التحقق من وجود الطلب
+    const order = await storage.getOrder(id);
+    if (!order) {
+      return res.status(404).json({ error: "الطلب غير موجود" });
+    }
+
+    // التحقق من أن الطلب متاح للتعيين
+    if (order.driverId) {
+      return res.status(400).json({ error: "الطلب مُعيَّن لسائق آخر بالفعل" });
+    }
+
+    // التحقق من وجود السائق
+    const driver = await storage.getDriver(driverId);
+    if (!driver) {
+      return res.status(404).json({ error: "السائق غير موجود" });
+    }
+
+    if (!driver.isAvailable || !driver.isActive) {
+      return res.status(400).json({ error: "السائق غير متاح حالياً" });
+    }
+
+    // تحديث الطلب
+    const updatedOrder = await storage.updateOrder(id, {
+      driverId,
+      status: 'preparing',
+      updatedAt: new Date()
+    });
+
+    // تحديث حالة السائق إلى مشغول
+    await storage.updateDriver(driverId, { isAvailable: false });
+
+    // إنشاء إشعارات
+    try {
+      // إشعار للعميل
+      await storage.createNotification({
+        type: 'order_assigned',
+        title: 'تم تعيين سائق لطلبك',
+        message: `السائق ${driver.name} سيقوم بتوصيل طلبك`,
+        recipientType: 'customer',
+        recipientId: order.customerId || order.customerPhone,
+        orderId: id,
+        isRead: false
+      });
+
+      // إشعار للسائقين الآخرين بأن الطلب لم يعد متاحاً
+      const otherDrivers = await storage.getAvailableDrivers();
+      for (const otherDriver of otherDrivers) {
+        if (otherDriver.id !== driverId) {
+          await storage.createNotification({
+            type: 'order_taken',
+            title: 'تم استلام الطلب',
+            message: `السائق ${driver.name} قام باستلام الطلب`,
+            recipientType: 'driver',
+            recipientId: otherDriver.id,
+            orderId: id,
+            isRead: false
+          });
+        }
+      }
+
+      // إشعار للإدارة
+      await storage.createNotification({
+        type: 'order_assigned',
+        title: 'تم تعيين سائق',
+        message: `تم تعيين السائق ${driver.name} للطلب ${order.orderNumber}`,
+        recipientType: 'admin',
+        recipientId: null,
+        orderId: id,
+        isRead: false
+      });
+
+      // تتبع الطلب
+      await storage.createOrderTracking({
+        orderId: id,
+        status: 'preparing',
+        message: `تم تعيين السائق ${driver.name} وبدء تحضير الطلب`,
+        createdBy: driverId,
+        createdByType: 'driver'
+      });
+    } catch (notificationError) {
+      console.error('خطأ في إنشاء الإشعارات:', notificationError);
+    }
+
+    res.json({ success: true, order: updatedOrder });
+  } catch (error) {
+    console.error('خطأ في تعيين السائق:', error);
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
+// تحديث حالة الطلب
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, updatedBy, updatedByType } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ error: "الحالة مطلوبة" });
+    }
+
+    // التحقق من وجود الطلب
+    const order = await storage.getOrder(id);
+    if (!order) {
+      return res.status(404).json({ error: "الطلب غير موجود" });
+    }
+
+    // تحديث الطلب
+    const updatedOrder = await storage.updateOrder(id, {
+      status,
+      updatedAt: new Date()
+    });
+
+    // إنشاء رسالة الحالة
+    let statusMessage = '';
+    switch (status) {
+      case 'confirmed':
+        statusMessage = 'تم تأكيد الطلب من المطعم';
+        break;
+      case 'preparing':
+        statusMessage = 'جاري تحضير الطلب';
+        break;
+      case 'ready':
+        statusMessage = 'الطلب جاهز للاستلام';
+        break;
+      case 'picked_up':
+        statusMessage = 'تم استلام الطلب من المطعم';
+        break;
+      case 'on_way':
+        statusMessage = 'السائق في الطريق إليك';
+        break;
+      case 'delivered':
+        statusMessage = 'تم تسليم الطلب بنجاح';
+        // تحرير السائق
+        if (order.driverId) {
+          await storage.updateDriver(order.driverId, { isAvailable: true });
+        }
+        break;
+      case 'cancelled':
+        statusMessage = 'تم إلغاء الطلب';
+        // تحرير السائق إذا كان مُعيَّناً
+        if (order.driverId) {
+          await storage.updateDriver(order.driverId, { isAvailable: true });
+        }
+        break;
+      default:
+        statusMessage = `تم تحديث حالة الطلب إلى ${status}`;
+    }
+
+    // إنشاء إشعارات وتتبع
+    try {
+      // إشعار للعميل
+      await storage.createNotification({
+        type: 'order_status_update',
+        title: 'تحديث حالة الطلب',
+        message: `طلبك رقم ${order.orderNumber}: ${statusMessage}`,
+        recipientType: 'customer',
+        recipientId: order.customerId || order.customerPhone,
+        orderId: id,
+        isRead: false
+      });
+
+      // إشعار للإدارة
+      await storage.createNotification({
+        type: 'order_status_update',
+        title: 'تحديث حالة الطلب',
+        message: `الطلب ${order.orderNumber}: ${statusMessage}`,
+        recipientType: 'admin',
+        recipientId: null,
+        orderId: id,
+        isRead: false
+      });
+
+      // تتبع الطلب
+      await storage.createOrderTracking({
+        orderId: id,
+        status,
+        message: statusMessage,
+        createdBy: updatedBy || 'system',
+        createdByType: updatedByType || 'system'
+      });
+    } catch (notificationError) {
+      console.error('خطأ في إنشاء الإشعارات:', notificationError);
+    }
+
+    res.json({ success: true, order: updatedOrder });
+  } catch (error) {
+    console.error("خطأ في تحديث حالة الطلب:", error);
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
+// جلب الطلبات حسب العميل
 router.get("/customer/:phone", async (req, res) => {
   try {
     const phone = req.params.phone.trim().replace(/\s+/g, '');
@@ -195,6 +402,9 @@ router.get("/customer/:phone", async (req, res) => {
       order.customerPhone && order.customerPhone.replace(/\s+/g, '') === phone
     );
     
+    // ترتيب حسب التاريخ (الأحدث أولاً)
+    customerOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
     res.json(customerOrders);
   } catch (error) {
     console.error("خطأ في جلب طلبات العميل:", error);
@@ -202,18 +412,10 @@ router.get("/customer/:phone", async (req, res) => {
   }
 });
 
-// الحصول على تفاصيل طلب
+// جلب تفاصيل طلب محدد
 router.get("/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
-    
-    // التحقق من صحة معرف الطلب
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(orderId)) {
-      return res.status(400).json({ 
-        error: "معرف الطلب غير صحيح"
-      });
-    }
     
     const order = await storage.getOrder(orderId);
     
@@ -228,111 +430,36 @@ router.get("/:orderId", async (req, res) => {
   }
 });
 
-// تحديث حالة الطلب
-router.patch("/:orderId/status", async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const { status, message, updatedBy, updatedByType } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ error: "الحالة مطلوبة" });
-    }
-
-    // التحقق من صحة معرف الطلب
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(orderId)) {
-      return res.status(400).json({ 
-        error: "معرف الطلب غير صحيح"
-      });
-    }
-
-    // تحديث حالة الطلب
-    await storage.updateOrder(orderId, { status });
-
-    // الحصول على الطلب المحدث
-    const order = await storage.getOrder(orderId);
-
-    // إنشاء رسالة الحالة
-    let statusMessage = message || '';
-    if (!statusMessage) {
-      switch (status) {
-        case 'confirmed':
-          statusMessage = 'تم تأكيد الطلب وجاري التحضير';
-          break;
-        case 'preparing':
-          statusMessage = 'جاري تحضير الطلب';
-          break;
-        case 'ready':
-          statusMessage = 'الطلب جاهز وجاري البحث عن موصل';
-          break;
-        case 'picked_up':
-          statusMessage = 'تم استلام الطلب من قبل الموصل';
-          break;
-        case 'on_way':
-          statusMessage = 'الموصل في الطريق إليك';
-          break;
-        case 'delivered':
-          statusMessage = 'تم تسليم الطلب بنجاح';
-          break;
-        case 'cancelled':
-          statusMessage = 'تم إلغاء الطلب';
-          break;
-        default:
-          statusMessage = `تم تحديث حالة الطلب إلى ${status}`;
-      }
-    }
-
-    // إنشاء تتبع للطلب
-    try {
-      await storage.createOrderTracking({
-        orderId,
-        status,
-        message: statusMessage,
-        createdBy: updatedBy || 'system',
-        createdByType: updatedByType || 'system'
-      });
-
-      // إرسال إشعار للعميل
-      if (order) {
-        await storage.createNotification({
-          type: 'order_status',
-          title: 'تحديث حالة الطلب',
-          message: `طلبك رقم ${order.orderNumber}: ${statusMessage}`,
-          recipientType: 'customer',
-          recipientId: order.customerId || order.customerPhone,
-          orderId,
-          isRead: false
-        });
-      }
-    } catch (trackingError) {
-      console.error('خطأ في إنشاء تتبع الطلب:', trackingError);
-    }
-
-    res.json({ success: true, status });
-  } catch (error) {
-    console.error("خطأ في تحديث حالة الطلب:", error);
-    res.status(500).json({ error: "خطأ في الخادم" });
-  }
-});
-
 // إلغاء الطلب
 router.patch("/:orderId/cancel", async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason, cancelledBy } = req.body;
 
-    // التحقق من صحة معرف الطلب
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(orderId)) {
-      return res.status(400).json({ 
-        error: "معرف الطلب غير صحيح"
-      });
+    const order = await storage.getOrder(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "الطلب غير موجود" });
     }
 
     await storage.updateOrder(orderId, { status: 'cancelled' });
 
-    // إنشاء تتبع للطلب
+    // تحرير السائق إذا كان مُعيَّناً
+    if (order.driverId) {
+      await storage.updateDriver(order.driverId, { isAvailable: true });
+    }
+
+    // إنشاء إشعارات
     try {
+      await storage.createNotification({
+        type: 'order_cancelled',
+        title: 'تم إلغاء الطلب',
+        message: `تم إلغاء طلبك رقم ${order.orderNumber}${reason ? ': ' + reason : ''}`,
+        recipientType: 'customer',
+        recipientId: order.customerId || order.customerPhone,
+        orderId,
+        isRead: false
+      });
+
       await storage.createOrderTracking({
         orderId,
         status: 'cancelled',
@@ -340,22 +467,8 @@ router.patch("/:orderId/cancel", async (req, res) => {
         createdBy: cancelledBy || 'system',
         createdByType: 'system'
       });
-
-      // إشعار العميل
-      const order = await storage.getOrder(orderId);
-      if (order) {
-        await storage.createNotification({
-          type: 'order_cancelled',
-          title: 'تم إلغاء الطلب',
-          message: `تم إلغاء طلبك رقم ${order.orderNumber}${reason ? ': ' + reason : ''}`,
-          recipientType: 'customer',
-          recipientId: order.customerId || order.customerPhone,
-          orderId,
-          isRead: false
-        });
-      }
-    } catch (trackingError) {
-      console.error('خطأ في إنشاء تتبع الطلب:', trackingError);
+    } catch (notificationError) {
+      console.error('خطأ في إنشاء الإشعارات:', notificationError);
     }
 
     res.json({ success: true, status: 'cancelled' });
@@ -364,5 +477,11 @@ router.patch("/:orderId/cancel", async (req, res) => {
     res.status(500).json({ error: "خطأ في الخادم" });
   }
 });
+
+// Helper function
+function formatCurrency(amount: string | number) {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return `${num.toFixed(2)} ريال`;
+}
 
 export default router;
