@@ -361,8 +361,8 @@ export class DatabaseStorage {
   }
 
   // Notifications
-  async getNotifications(recipientType?: string, recipientId?: string, unread?: boolean): Promise<Notification[]> {
-    try {
+async getNotifications(recipientType?: string, recipientId?: string, unread?: boolean): Promise<Notification[]> {
+  try {
     const conditions = [];
     if (recipientType) {
       conditions.push(eq(notifications.recipientType, recipientType));
@@ -378,15 +378,15 @@ export class DatabaseStorage {
       return await this.db.select().from(notifications)
         .where(and(...conditions))
         .orderBy(desc(notifications.createdAt));
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      return [];
-    }
     }
     
     return await this.db.select().from(notifications)
       .orderBy(desc(notifications.createdAt));
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
   }
+}
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
     try {
