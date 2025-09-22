@@ -43,6 +43,28 @@ export function DriverCommunication({ driver, orderNumber, customerLocation }: D
     }
   };
 
+  // فتح خرائط جوجل للتنقل
+  const openGoogleMaps = (address: string) => {
+    const encodedAddress = encodeURIComponent(address);
+    
+    // للأجهزة المحمولة، محاولة فتح تطبيق الخرائط
+    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // محاولة فتح تطبيق خرائط جوجل
+      const mobileAppUrl = `comgooglemaps://?q=${encodedAddress}`;
+      window.location.href = mobileAppUrl;
+      
+      // إذا فشل فتح التطبيق، فتح المتصفح بعد ثانية
+      setTimeout(() => {
+        const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+        window.open(webUrl, '_blank');
+      }, 1000);
+    } else {
+      // للحاسوب، فتح في المتصفح
+      const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+      window.open(webUrl, '_blank');
+    }
+  };
+
   const handleWhatsAppMessage = (message: string) => {
     try {
       const fullMessage = `مرحباً ${driver.name}، طلب رقم ${orderNumber}: ${message}`;
