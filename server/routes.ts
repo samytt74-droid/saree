@@ -701,19 +701,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ratings functionality temporarily disabled - would require additional database methods
 
   // ================= NOTIFICATIONS API =================
-  app.get("/api/notifications", async (req, res) => {
-    try {
-      const { recipientType, recipientId, unread } = req.query;
-      const notifications = await storage.getNotifications(
-        recipientType as string, 
-        recipientId as string, 
-        unread === 'true'
-      );
-      res.json(notifications);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch notifications" });
-    }
-  });
+/*
+app.get("/api/notifications", async (req, res) => {
+  try {
+    const { recipientType, recipientId, unread } = req.query;
+    const notifications = await storage.getNotifications(
+      recipientType as string, 
+      recipientId as string, 
+      unread === 'true'
+    );
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+});
+*/
 
   app.post("/api/notifications", async (req, res) => {
     try {
