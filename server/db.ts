@@ -183,8 +183,22 @@ export class DatabaseStorage {
   }
 
   async deleteRestaurant(id: string): Promise<boolean> {
-    const result = await this.db.delete(restaurants).where(eq(restaurants.id, id));
-    return result.rowCount > 0;
+    try {
+      // أولاً: حذف جميع عناصر القائمة المرتبطة بالمطعم
+      await this.db.delete(menuItems).where(eq(menuItems.restaurantId, id));
+      
+      // ثانياً: تحديث الطلبات لفصلها عن المطعم (تعيين null)
+      await this.db.update(orders)
+        .set({ restaurantId: null })
+        .where(eq(orders.restaurantId, id));
+      
+      // ثالثاً: حذف المطعم نفسه
+      const result = await this.db.delete(restaurants).where(eq(restaurants.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('خطأ في حذف المطعم:', error);
+      return false;
+    }
   }
 
   // Menu Items
