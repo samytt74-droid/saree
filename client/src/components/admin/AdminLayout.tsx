@@ -176,15 +176,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row" dir="rtl">
+    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block lg:w-80 bg-white shadow-lg">
+      <div className="hidden lg:block w-80 bg-white shadow-lg">
         <SidebarContent />
       </div>
 
       {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="right" className="w-80 p-0 lg:hidden">
+        <SheetContent side="right" className="w-80 p-0">
           <SidebarContent />
         </SheetContent>
       </Sheet>
@@ -192,25 +192,25 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile Header */}
-        <div className="lg:hidden bg-white border-b p-3 flex items-center justify-between sticky top-0 z-30">
+        <div className="lg:hidden bg-white border-b p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <BarChart3 className="h-4 w-4 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <BarChart3 className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-gray-900">لوحة التحكم</h1>
+              <h1 className="font-bold text-gray-900">لوحة التحكم</h1>
               <p className="text-xs text-gray-500">السريع ون</p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="p-2">
-              <Bell className="h-4 w-4" />
+            <Button variant="ghost" size="sm">
+              <Bell className="h-5 w-5" />
             </Button>
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-2">
-                  <Menu className="h-4 w-4" />
+                <Button variant="ghost" size="sm">
+                  <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
             </Sheet>
@@ -218,7 +218,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1">
           {children}
         </div>
       </div>

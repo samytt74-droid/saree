@@ -262,7 +262,6 @@ export default function DriversManagement() {
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     placeholder="كلمة المرور"
                     required={!selectedDriver}
-                    minLength={6}
                     data-testid="input-driver-password"
                   />
                   <Button
@@ -275,11 +274,6 @@ export default function DriversManagement() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
-                {!selectedDriver && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    كلمة المرور يجب أن تكون 6 أحرف على الأقل
-                  </p>
-                )}
               </div>
               
               <div>

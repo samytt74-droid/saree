@@ -15,7 +15,7 @@ interface LocationPermissionModalProps {
 }
 
 export function LocationPermissionModal({ onPermissionGranted, onPermissionDenied }: LocationPermissionModalProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<'unknown' | 'granted' | 'denied'>('unknown');
 
   useEffect(() => {
@@ -28,7 +28,6 @@ export function LocationPermissionModal({ onPermissionGranted, onPermissionDenie
         const permission = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
         if (permission.state === 'granted') {
           setPermissionStatus('granted');
-          setIsOpen(false);
           getCurrentLocation();
         } else if (permission.state === 'denied') {
           setPermissionStatus('denied');
@@ -79,20 +78,6 @@ export function LocationPermissionModal({ onPermissionGranted, onPermissionDenie
     setIsOpen(false);
   };
 
-  // طلب صلاحيات إضافية
-  const requestAdditionalPermissions = async () => {
-    // طلب إذن الإشعارات
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission();
-    }
-    
-    // طلب إذن الكاميرا والميكروفون (للمستقبل)
-    try {
-      await navigator.mediaDevices.getUserMedia({ video: false, audio: false });
-    } catch (error) {
-      console.log('Media permissions not granted, but continuing...');
-    }
-  };
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md" dir="rtl">
@@ -101,10 +86,10 @@ export function LocationPermissionModal({ onPermissionGranted, onPermissionDenie
             <MapPin className="h-6 w-6 text-primary" />
           </div>
           <DialogTitle className="text-xl font-bold">
-            صلاحيات التطبيق
+            السماح بالوصول للموقع
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            نحتاج إلى بعض الصلاحيات لتوفير أفضل خدمة توصيل لك
+            نحتاج إلى معرفة موقعك لتوصيل طلباتك بدقة وعرض المطاعم القريبة منك
           </DialogDescription>
         </DialogHeader>
 
@@ -129,13 +114,6 @@ export function LocationPermissionModal({ onPermissionGranted, onPermissionDenie
             <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
               <Shield className="h-5 w-5 text-primary flex-shrink-0" />
               <div className="text-sm">
-                <div className="font-medium">الإشعارات</div>
-                <div className="text-muted-foreground">تلقي تحديثات الطلب والعروض الخاصة</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
-              <Shield className="h-5 w-5 text-primary flex-shrink-0" />
-              <div className="text-sm">
                 <div className="font-medium">حماية خصوصيتك</div>
                 <div className="text-muted-foreground">لن نشارك موقعك مع أطراف خارجية</div>
               </div>
@@ -151,10 +129,7 @@ export function LocationPermissionModal({ onPermissionGranted, onPermissionDenie
               تخطي
             </Button>
             <Button 
-              onClick={async () => {
-                await requestAdditionalPermissions();
-                requestLocationPermission();
-              }}
+              onClick={requestLocationPermission}
               className="flex-1"
             >
               السماح بالوصول

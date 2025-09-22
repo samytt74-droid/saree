@@ -1,14 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Clock } from 'lucide-react';
-import { useUiSettings } from '@/context/UiSettingsContext';
 
 export default function TimingBanner() {
-  const { getSetting } = useUiSettings();
+  const { data: uiSettings } = useQuery({
+    queryKey: ['/api/admin/ui-settings'],
+  });
 
-  // الحصول على إعدادات أوقات العمل من UiSettings context
-  const openingTime = getSetting('opening_time', '11:00');
-  const closingTime = getSetting('closing_time', '23:00');
-  const currentStatus = getSetting('store_status', 'مغلق');
+  // البحث عن إعدادات أوقات العمل
+  const openingTime = uiSettings?.find((setting: any) => setting.key === 'opening_time')?.value || '11:00';
+  const closingTime = uiSettings?.find((setting: any) => setting.key === 'closing_time')?.value || '23:00';
+  const currentStatus = uiSettings?.find((setting: any) => setting.key === 'store_status')?.value || 'مغلق';
 
   return (
     <div className="bg-gray-100 py-3">
