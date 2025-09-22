@@ -110,7 +110,7 @@ export interface IStorage {
   getAdminById(id: string): Promise<AdminUser | undefined>;
 
   // Notification methods
-  getNotifications(recipientId?: string, type?: string): Promise<Notification[]>;
+   // getNotifications(recipientId?: string, type?: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
 
   // Order tracking methods
