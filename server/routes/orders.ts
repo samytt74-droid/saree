@@ -31,50 +31,27 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // التحقق من صحة معرف المطعم - تحسين للتعامل مع الكائنات
-    let validRestaurantId = restaurantId;
-    if (typeof restaurantId === 'object' && restaurantId !== null) {
-      // إذا تم تمرير كائن بدلاً من معرف، استخرج المعرف
-      validRestaurantId = restaurantId.id || restaurantId.restaurantId;
-    }
-    
-    if (!validRestaurantId || typeof validRestaurantId !== 'string') {
+    // التحقق من صحة معرف المطعم
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(restaurantId)) {
       return res.status(400).json({ 
         error: "معرف المطعم غير صحيح", 
-        message: "Invalid restaurant ID format.",
-        received: restaurantId
+        message: "Invalid restaurant ID format. Must be a valid UUID.",
+        restaurantId 
       });
     }
 
     // التحقق من وجود المطعم
     const restaurants = await storage.getRestaurants();
-    const restaurant = restaurants.find(r => r.id === validRestaurantId);
+    const restaurant = restaurants.find(r => r.id === restaurantId);
     if (!restaurant) {
       return res.status(400).json({ 
         error: "المطعم المحدد غير موجود", 
         message: "Restaurant not found",
-        restaurantId: validRestaurantId
+        restaurantId 
       });
     }
 
-    // حساب رسوم التوصيل بناءً على المسافة إذا تم توفير الموقع
-    let calculatedDeliveryFee = parseFloat(deliveryFee || "5");
-    let calculatedDistance = 0;
-    
-    if (customerLocationLat && customerLocationLng && restaurant.latitude && restaurant.longitude) {
-      try {
-        const deliveryInfo = await storage.calculateDeliveryFee(
-          validRestaurantId,
-          parseFloat(customerLocationLat),
-          parseFloat(customerLocationLng)
-        );
-        calculatedDeliveryFee = deliveryInfo.deliveryFee;
-        calculatedDistance = deliveryInfo.distance;
-      } catch (error) {
-        console.error('خطأ في حساب رسوم التوصيل:', error);
-        // استخدام الرسوم الافتراضية في حالة الخطأ
-      }
-    }
     // إنشاء رقم طلب فريد
     const orderNumber = `ORD-${Date.now()}`;
 
@@ -87,17 +64,16 @@ router.post("/", async (req, res) => {
       deliveryAddress,
       customerLocationLat: customerLocationLat || null,
       customerLocationLng: customerLocationLng || null,
-      calculatedDistance: calculatedDistance.toString(),
       notes: notes || null,
       paymentMethod: paymentMethod || 'cash',
       status: 'pending',
       items: typeof items === 'string' ? items : JSON.stringify(items),
       subtotal: String(subtotal || 0),
-      deliveryFee: String(calculatedDeliveryFee),
-      total: String((parseFloat(subtotal || "0") + calculatedDeliveryFee).toFixed(2)),
-      totalAmount: String((parseFloat(subtotal || "0") + calculatedDeliveryFee).toFixed(2)),
+      deliveryFee: String(deliveryFee || 0),
+      total: String(totalAmount || 0),
+      totalAmount: String(totalAmount || 0),
       driverEarnings: "0",
-      restaurantId: validRestaurantId,
+      restaurantId,
       estimatedTime: '30-45 دقيقة'
     };
 

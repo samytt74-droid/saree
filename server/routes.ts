@@ -200,55 +200,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/orders/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      
-      // التحقق من صحة معرف الطلب
-      if (!id || typeof id !== 'string') {
-        return res.status(400).json({ message: "معرف الطلب غير صحيح" });
-      }
-      
       const validatedData = insertOrderSchema.partial().parse(req.body);
       const order = await storage.updateOrder(id, validatedData);
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
-      // إنشاء إشعار عند تحديث حالة الطلب
-      if (validatedData.status) {
-        try {
-          let statusMessage = '';
-          switch (validatedData.status) {
-            case 'confirmed':
-              statusMessage = 'تم تأكيد طلبك وجاري التحضير';
-              break;
-            case 'preparing':
-              statusMessage = 'جاري تحضير طلبك';
-              break;
-            case 'on_way':
-              statusMessage = 'طلبك في الطريق إليك';
-              break;
-            case 'delivered':
-              statusMessage = 'تم تسليم طلبك بنجاح';
-              break;
-            case 'cancelled':
-              statusMessage = 'تم إلغاء طلبك';
-              break;
-            default:
-              statusMessage = `تم تحديث حالة طلبك إلى ${validatedData.status}`;
-          }
-          
-          await storage.createNotification({
-            type: 'order_update',
-            title: 'تحديث حالة الطلب',
-            message: statusMessage,
-            recipientType: 'customer',
-            recipientId: order.customerPhone,
-            orderId: order.id
-          });
-        } catch (notificationError) {
-          console.error('خطأ في إنشاء الإشعار:', notificationError);
-        }
-      }
-      
       res.json(order);
     } catch (error) {
       res.status(400).json({ message: "Invalid order data" });

@@ -54,7 +54,6 @@ export const restaurants = pgTable("restaurants", {
   isOpen: boolean("is_open").default(true).notNull(),
   minimumOrder: decimal("minimum_order", { precision: 10, scale: 2 }).default("0"),
   deliveryFee: decimal("delivery_fee", { precision: 10, scale: 2 }).default("0"),
-  deliveryFeePerKm: decimal("delivery_fee_per_km", { precision: 10, scale: 2 }).default("1.5"), // رسوم التوصيل لكل كيلومتر
   categoryId: uuid("category_id").references(() => categories.id),
   openingTime: varchar("opening_time", { length: 50 }).default("08:00"), // تمت الإضافة
   closingTime: varchar("closing_time", { length: 50 }).default("23:00"), // تمت الإضافة
@@ -83,7 +82,7 @@ export const menuItems = pgTable("menu_items", {
   category: varchar("category", { length: 100 }).notNull(), // تم تغيير إلى notNull
   isAvailable: boolean("is_available").default(true).notNull(),
   isSpecialOffer: boolean("is_special_offer").default(false).notNull(),
-  restaurantId: uuid("restaurant_id").references(() => restaurants.id, { onDelete: "cascade" }),
+  restaurantId: uuid("restaurant_id").references(() => restaurants.id),
 });
 
 // Drivers table - بدون مصادقة
@@ -108,9 +107,6 @@ export const orders = pgTable("orders", {
   customerEmail: varchar("customer_email", { length: 100 }),
   customerId: uuid("customer_id").references(() => users.id),
   deliveryAddress: text("delivery_address").notNull(),
-  customerLocationLat: decimal("customer_location_lat", { precision: 10, scale: 8 }),
-  customerLocationLng: decimal("customer_location_lng", { precision: 11, scale: 8 }),
-  calculatedDistance: decimal("calculated_distance", { precision: 10, scale: 2 }),
   notes: text("notes"),
   paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
   status: varchar("status", { length: 50 }).default("pending").notNull(),
@@ -121,8 +117,8 @@ export const orders = pgTable("orders", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   estimatedTime: varchar("estimated_time", { length: 50 }).default("30-45 دقيقة"),
   driverEarnings: decimal("driver_earnings", { precision: 10, scale: 2 }).default("0"),
-  restaurantId: uuid("restaurant_id").references(() => restaurants.id, { onDelete: "set null" }),
-  driverId: uuid("driver_id").references(() => drivers.id, { onDelete: "set null" }),
+  restaurantId: uuid("restaurant_id").references(() => restaurants.id),
+  driverId: uuid("driver_id").references(() => drivers.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

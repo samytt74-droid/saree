@@ -108,7 +108,6 @@ router.post('/driver/login', async (req, res) => {
       .limit(1);
 
     if (driverResult.length === 0) {
-      console.log('❌ لم يتم العثور على سائق بالهاتف:', phone);
       return res.status(401).json({
         success: false,
         message: 'بيانات الدخول غير صحيحة'
@@ -116,7 +115,6 @@ router.post('/driver/login', async (req, res) => {
     }
 
     const driver = driverResult[0];
-    console.log('✅ تم العثور على السائق:', driver.name);
 
     // التحقق من حالة الحساب
     if (!driver.isActive) {
@@ -126,19 +124,10 @@ router.post('/driver/login', async (req, res) => {
       });
     }
 
-    // التحقق من كلمة المرور - دعم كلمات المرور المشفرة وغير المشفرة
-    let isPasswordValid = false;
-    
-    // محاولة التحقق من كلمة المرور المشفرة أولاً
-    try {
-      isPasswordValid = await bcrypt.compare(password, driver.password);
-    } catch (error) {
-      // إذا فشل التشفير، جرب المقارنة المباشرة (للبيانات القديمة)
-      isPasswordValid = password === driver.password;
-    }
+    // التحقق من كلمة المرور (مقارنة مباشرة بدون تشفير)
+    const isPasswordValid = password === driver.password;
 
     if (!isPasswordValid) {
-      console.log('❌ كلمة المرور غير صحيحة للسائق:', driver.name);
       return res.status(401).json({
         success: false,
         message: 'بيانات الدخول غير صحيحة'
