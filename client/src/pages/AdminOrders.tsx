@@ -111,11 +111,11 @@ export default function AdminOrders() {
       </div>
 
       {/* Orders Grid */}
-      <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div className="space-y-4">
         {isLoading ? (
           [...Array(5)].map((_, i) => (
-            <Card key={i} className="animate-pulse mx-2">
-              <CardContent className="p-4">
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="h-6 bg-muted rounded w-32" />
                   <div className="h-6 bg-muted rounded w-20" />
@@ -135,20 +135,21 @@ export default function AdminOrders() {
             const nextStatusLabel = getNextStatusLabel(order.status || 'pending');
             
             return (
-              <Card key={order.id} className="hover:shadow-md transition-shadow mx-2 mb-4">
-                <CardHeader className="pb-3 px-4 pt-4">
+              <Card key={order.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Package className="h-5 w-5 text-primary" />
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Package className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-base">طلب #{order.id.slice(0, 8)}</CardTitle>
-                        <p className="text-xs text-muted-foreground">
+                        <CardTitle className="text-lg">طلب #{order.id}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
                           {new Date(order.createdAt).toLocaleDateString('ar-YE', {
-                            month: 'short',
+                            year: 'numeric',
+                            month: 'long',
                             day: 'numeric',
-                            hour: 'numeric',
+                            hour: '2-digit',
                             minute: '2-digit'
                           })}
                         </p>
@@ -158,32 +159,32 @@ export default function AdminOrders() {
                   </div>
                 </CardHeader>
                 
-                <CardContent className="space-y-3 px-4 pb-4">
+                <CardContent className="space-y-4">
                   {/* Customer Info */}
-                  <div className="grid grid-cols-1 gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                     <div>
-                      <h4 className="font-semibold text-foreground mb-1 text-sm">معلومات العميل</h4>
-                      <p className="text-xs text-foreground">{order.customerName}</p>
+                      <h4 className="font-semibold text-foreground mb-2">معلومات العميل</h4>
+                      <p className="text-sm text-foreground">{order.customerName}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">{order.customerPhone}</span>
                       </div>
                     </div>
-                    <div className="mt-2">
-                      <h4 className="font-semibold text-foreground mb-1 text-sm">عنوان التوصيل</h4>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-2">عنوان التوصيل</h4>
                       <div className="flex items-start gap-2">
-                        <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
-                        <span className="text-xs text-muted-foreground line-clamp-2">{order.deliveryAddress}</span>
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <span className="text-sm text-muted-foreground">{order.deliveryAddress}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Order Items */}
                   <div>
-                    <h4 className="font-semibold text-foreground mb-2 text-sm">تفاصيل الطلب</h4>
+                    <h4 className="font-semibold text-foreground mb-2">تفاصيل الطلب</h4>
                     <div className="space-y-2">
                       {items.map((item: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center text-xs">
+                        <div key={index} className="flex justify-between items-center text-sm">
                           <span className="text-foreground">{item.name} × {item.quantity}</span>
                           <span className="text-muted-foreground">{item.price * item.quantity} ريال</span>
                         </div>
@@ -191,15 +192,15 @@ export default function AdminOrders() {
                     </div>
                     
                     <div className="border-t border-border mt-2 pt-2">
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="flex justify-between items-center text-sm">
                         <span className="text-muted-foreground">المجموع الفرعي:</span>
                         <span className="text-foreground">{order.subtotal} ريال</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="flex justify-between items-center text-sm">
                         <span className="text-muted-foreground">رسوم التوصيل:</span>
                         <span className="text-foreground">{order.deliveryFee} ريال</span>
                       </div>
-                      <div className="flex justify-between items-center font-semibold text-sm">
+                      <div className="flex justify-between items-center font-semibold">
                         <span className="text-foreground">المجموع:</span>
                         <span className="text-primary">{order.totalAmount} ريال</span>
                       </div>
@@ -207,23 +208,23 @@ export default function AdminOrders() {
                   </div>
 
                   {/* Payment & Notes */}
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <h4 className="font-semibold text-foreground mb-1 text-sm">طريقة الدفع</h4>
-                      <p className="text-xs text-muted-foreground">
+                      <h4 className="font-semibold text-foreground mb-1">طريقة الدفع</h4>
+                      <p className="text-sm text-muted-foreground">
                         {order.paymentMethod === 'cash' ? 'دفع نقدي' : 'مدفوع مسبقاً'}
                       </p>
                     </div>
                     {order.notes && (
                       <div>
-                        <h4 className="font-semibold text-foreground mb-1 text-sm">ملاحظات</h4>
-                        <p className="text-xs text-muted-foreground">{order.notes}</p>
+                        <h4 className="font-semibold text-foreground mb-1">ملاحظات</h4>
+                        <p className="text-sm text-muted-foreground">{order.notes}</p>
                       </div>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
+                  <div className="flex gap-2 pt-4 border-t border-border">
                     {nextStatus && order.status !== 'delivered' && order.status !== 'cancelled' && (
                       <Button
                         onClick={() => updateOrderStatusMutation.mutate({ 
@@ -231,11 +232,10 @@ export default function AdminOrders() {
                           status: nextStatus 
                         })}
                         disabled={updateOrderStatusMutation.isPending}
-                        size="sm"
-                        className="gap-1 text-xs flex-1"
+                        className="gap-2"
                         data-testid={`button-update-order-${order.id}`}
                       >
-                        <CheckCircle className="h-3 w-3" />
+                        <CheckCircle className="h-4 w-4" />
                         {nextStatusLabel}
                       </Button>
                     )}
@@ -243,34 +243,31 @@ export default function AdminOrders() {
                     {order.status === 'pending' && (
                       <Button
                         variant="destructive"
-                        size="sm"
                         onClick={() => updateOrderStatusMutation.mutate({ 
                           id: order.id, 
                           status: 'cancelled' 
                         })}
                         disabled={updateOrderStatusMutation.isPending}
-                        className="gap-1 text-xs flex-1"
+                        className="gap-2"
                         data-testid={`button-cancel-order-${order.id}`}
                       >
-                        <XCircle className="h-3 w-3" />
+                        <XCircle className="h-4 w-4" />
                         إلغاء الطلب
                       </Button>
                     )}
                     
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => window.open(`tel:${order.customerPhone}`)}
-                      className="gap-1 text-xs"
+                      className="gap-2"
                       data-testid={`button-call-customer-${order.id}`}
                     >
-                      <Phone className="h-3 w-3" />
+                      <Phone className="h-4 w-4" />
                       اتصال بالعميل
                     </Button>
                     
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => {
                         const address = encodeURIComponent(order.deliveryAddress);
                         const googleMapsUrl = order.customerLocationLat && order.customerLocationLng 
@@ -278,10 +275,10 @@ export default function AdminOrders() {
                           : `https://www.google.com/maps/search/?api=1&query=${address}`;
                         window.open(googleMapsUrl, '_blank');
                       }}
-                      className="gap-1 text-xs"
+                      className="gap-2"
                       data-testid={`button-track-location-${order.id}`}
                     >
-                      <Navigation className="h-3 w-3" />
+                      <Navigation className="h-4 w-4" />
                       تتبع الموقع
                     </Button>
                   </div>
@@ -290,7 +287,7 @@ export default function AdminOrders() {
             );
           })
         ) : (
-          <div className="text-center py-8 mx-4">
+          <div className="text-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
               {statusFilter === 'all' ? 'لا توجد طلبات' : `لا توجد طلبات ${statusFilter === 'pending' ? 'في الانتظار' : statusFilter === 'confirmed' ? 'مؤكدة' : statusFilter === 'preparing' ? 'قيد التحضير' : statusFilter === 'on_way' ? 'في الطريق' : statusFilter === 'delivered' ? 'مكتملة' : 'ملغية'}`}

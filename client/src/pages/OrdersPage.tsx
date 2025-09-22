@@ -234,42 +234,41 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-4 py-3">
+        <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setLocation('/')}
               data-testid="button-back"
-              className="p-2"
             >
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">طلباتي</h1>
-              <p className="text-xs text-gray-500">تتبع ومراجعة طلباتك</p>
+              <h1 className="text-xl font-bold text-gray-900">طلباتي</h1>
+              <p className="text-sm text-gray-500">تتبع ومراجعة طلباتك</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="p-4">
+      <div className="max-w-md mx-auto p-4">
         <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as any)}>
-          <TabsList className="grid w-full grid-cols-4 mb-4 h-auto">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             {tabs.map((tab) => (
               <TabsTrigger 
                 key={tab.id} 
                 value={tab.id}
-                className="text-xs relative py-2"
+                className="text-xs relative"
                 data-testid={`tab-${tab.id}`}
               >
                 {tab.label}
                 {tab.count > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">
+                  <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">
                     {tab.count}
                   </Badge>
                 )}
@@ -277,10 +276,10 @@ export default function OrdersPage() {
             ))}
           </TabsList>
 
-          <TabsContent value={selectedTab} className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <TabsContent value={selectedTab} className="space-y-4">
             {filteredOrders.length === 0 ? (
               <Card>
-                <CardContent className="text-center py-8">
+                <CardContent className="text-center py-12">
                   <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">لا توجد طلبات</h3>
                   <p className="text-gray-500 mb-4">لم تقم بأي طلبات بعد</p>
@@ -295,32 +294,32 @@ export default function OrdersPage() {
                 
                 return (
                   <Card key={order.id} className="overflow-hidden">
-                    <CardHeader className="pb-2 px-4 pt-3">
+                    <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle className="text-base font-bold">{order.restaurantName}</CardTitle>
-                          <p className="text-xs text-gray-500">طلب رقم: {order.orderNumber}</p>
+                          <CardTitle className="text-lg font-bold">{order.restaurantName}</CardTitle>
+                          <p className="text-sm text-gray-500">طلب رقم: {order.orderNumber}</p>
                         </div>
                         <Badge 
                           className={`${getStatusColor(order.status)} text-white`}
                           data-testid={`badge-status-${order.status}`}
                         >
-                          <StatusIcon className="w-3 h-3 ml-1" />
+                          <StatusIcon className="w-3 h-3 mr-1" />
                           {getStatusLabel(order.status)}
                         </Badge>
                       </div>
                     </CardHeader>
                     
-                    <CardContent className="space-y-3 px-4 pb-3">
+                    <CardContent className="space-y-4">
                       {/* Order Items */}
                       <div className="space-y-2">
                         {order.parsedItems?.map((item: OrderItem, index: number) => (
-                          <div key={index} className="flex justify-between text-xs">
+                          <div key={index} className="flex justify-between text-sm">
                             <span>{item.quantity}x {item.name}</span>
                             <span className="font-medium">{item.price} ر.س</span>
                           </div>
                         )) || (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-sm text-gray-500">
                             لا توجد تفاصيل العناصر
                           </div>
                         )}
@@ -328,7 +327,7 @@ export default function OrdersPage() {
 
                       {/* Order Summary */}
                       <div className="border-t pt-3 space-y-2">
-                        <div className="flex justify-between text-xs text-gray-600">
+                        <div className="flex justify-between text-sm text-gray-600">
                           <span>عدد الأصناف: {order.parsedItems?.reduce((sum: number, item: OrderItem) => sum + item.quantity, 0) || 0}</span>
                           <span>المجموع: {order.totalAmount} ر.س</span>
                         </div>
@@ -338,7 +337,7 @@ export default function OrdersPage() {
                             <span>الوقت المتوقع: {order.estimatedTime}</span>
                           )}
                         </div>
-                        <div className="flex flex-col gap-1 text-xs text-gray-500">
+                        <div className="flex justify-between text-xs text-gray-500">
                           <span>العنوان: {order.deliveryAddress}</span>
                           <span>الدفع: {order.paymentMethod === 'cash' ? 'نقدي' : 'إلكتروني'}</span>
                         </div>
@@ -349,18 +348,18 @@ export default function OrdersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 text-xs"
+                          className="flex-1"
                           onClick={() => handleViewOrder(order.id)}
                           data-testid={`button-view-order-${order.id}`}
                         >
-                          <Eye className="w-3 h-3 ml-1" />
+                          <Eye className="w-4 h-4 mr-1" />
                           تتبع الطلب
                         </Button>
                         
                         {order.status === 'delivered' && (
                           <Button
                             size="sm"
-                            className="flex-1 text-xs"
+                            className="flex-1"
                             onClick={() => handleReorder(order)}
                             data-testid={`button-reorder-${order.id}`}
                           >

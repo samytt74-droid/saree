@@ -176,6 +176,14 @@ export default function DriverLoginPage() {
               </Button>
             </form>
 
+            {/* Demo Credentials */}
+            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-sm text-green-800 font-medium mb-2">بيانات تجريبية:</p>
+              <div className="text-xs text-green-700 space-y-1">
+                <p>رقم الهاتف: +967771234567</p>
+                <p>كلمة المرور: password123</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

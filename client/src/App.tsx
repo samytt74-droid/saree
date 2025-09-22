@@ -11,11 +11,12 @@ import { UiSettingsProvider, useUiSettings } from "./context/UiSettingsContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { LocationPermissionModal } from "./components/LocationPermissionModal";
 import Layout from "./components/Layout";
+import { LoginPage } from "./pages/LoginPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import DriverLoginPage from "./pages/driver/DriverLoginPage";
 import AdminApp from "./pages/AdminApp";
 import { DriverDashboard } from "./pages/DriverDashboard";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Home from "./pages/Home";
 import Restaurant from "./pages/Restaurant";
 import Cart from "./pages/Cart";
@@ -27,27 +28,15 @@ import TrackOrdersPage from "./pages/TrackOrdersPage";
 import Settings from "./pages/Settings";
 import Privacy from "./pages/Privacy";
 import SearchPage from "./pages/SearchPage";
+// Admin pages removed - now handled separately
 import NotFound from "@/pages/not-found";
 
 function MainApp() {
+  // const { userType, loading } = useAuth(); // تم إزالة نظام المصادقة
   const { location } = useLocation();
   const [showLocationModal, setShowLocationModal] = useState(true);
-  const [hasRequestedPermissions, setHasRequestedPermissions] = useState(false);
 
-  // فحص الصلاحيات عند تحميل التطبيق
-  useEffect(() => {
-    const checkInitialPermissions = async () => {
-      const hasLocationPermission = localStorage.getItem('location_permission') === 'granted';
-      const hasNotificationPermission = 'Notification' in window && Notification.permission === 'granted';
-      
-      if (hasLocationPermission && hasNotificationPermission) {
-        setShowLocationModal(false);
-        setHasRequestedPermissions(true);
-      }
-    };
-    
-    checkInitialPermissions();
-  }, []);
+  // تم إزالة loading state ومراجع المصادقة
 
   // Handle login pages first (without layout)
   if (window.location.pathname === '/admin-login') {
@@ -68,6 +57,7 @@ function MainApp() {
     return <DriverDashboard onLogout={() => window.location.href = '/'} />;
   }
 
+  // Remove admin/driver routes from customer app routing
 
   // Default customer app
   return (
@@ -76,18 +66,15 @@ function MainApp() {
         <Router />
       </Layout>
       
-      {showLocationModal && !hasRequestedPermissions && (
+      {showLocationModal && !location.hasPermission && (
         <LocationPermissionModal
           onPermissionGranted={(position) => {
             console.log('تم منح الإذن للموقع:', position);
-            localStorage.setItem('location_permission', 'granted');
             setShowLocationModal(false);
-            setHasRequestedPermissions(true);
           }}
           onPermissionDenied={() => {
             console.log('تم رفض الإذن للموقع');
             setShowLocationModal(false);
-            setHasRequestedPermissions(true);
           }}
         />
       )}
