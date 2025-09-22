@@ -54,7 +54,21 @@ function MainApp() {
 
   // Handle driver routes (direct access without authentication)  
   if (window.location.pathname.startsWith('/driver')) {
-    return <DriverDashboard onLogout={() => window.location.href = '/'} />;
+    // التحقق من تسجيل الدخول للسائق
+    const driverToken = localStorage.getItem('driver_token');
+    const driverUser = localStorage.getItem('driver_user');
+    
+    if (!driverToken || !driverUser) {
+      // إعادة توجيه إلى صفحة تسجيل الدخول
+      window.location.href = '/driver-login';
+      return null;
+    }
+    
+    return <DriverDashboard onLogout={() => {
+      localStorage.removeItem('driver_token');
+      localStorage.removeItem('driver_user');
+      window.location.href = '/';
+    }} />;
   }
 
   // Remove admin/driver routes from customer app routing
