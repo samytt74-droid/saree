@@ -1,5 +1,4 @@
 import { dbStorage } from './db';
-import bcrypt from 'bcryptjs';
 
 export async function seedDefaultData() {
   try {
@@ -223,18 +222,6 @@ export async function seedDefaultData() {
         category: "general",
         description: "الحد الأدنى لقيمة الطلب (ريال)"
       },
-      {
-        key: "delivery_base_fee",
-        value: "5",
-        category: "delivery",
-        description: "الرسوم الأساسية للتوصيل (ريال)"
-      },
-      {
-        key: "delivery_price_per_km",
-        value: "2",
-        category: "delivery",
-        description: "سعر الكيلومتر الواحد للتوصيل (ريال)"
-      },
       
       // Store Settings
       {
@@ -270,7 +257,7 @@ export async function seedDefaultData() {
         email: "admin@alsarie-one.com",
         username: "admin",
         phone: "+967777777777",
-        password: await bcrypt.hash("admin123456", 10),
+        password: "admin123456", // كلمة مرور غير مشفرة للاختبار
         userType: "admin",
         isActive: true,
       },
@@ -279,7 +266,7 @@ export async function seedDefaultData() {
         email: "manager@alsarie-one.com", 
         username: "manager",
         phone: "+967777777778",
-        password: await bcrypt.hash("manager123", 10),
+        password: "manager123",
         userType: "admin",
         isActive: true,
       }
@@ -296,7 +283,7 @@ export async function seedDefaultData() {
       {
         name: "أحمد محمد السائق",
         phone: "+967771234567",
-        password: await bcrypt.hash("driver123", 10),
+        password: "driver123", // كلمة مرور غير مشفرة للاختبار
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع الزبيري",
@@ -305,7 +292,7 @@ export async function seedDefaultData() {
       {
         name: "علي حسن السائق",
         phone: "+967779876543",
-        password: await bcrypt.hash("driver456", 10),
+        password: "driver456",
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع السبعين",

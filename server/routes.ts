@@ -200,53 +200,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/orders/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { status, driverId } = req.body;
-      
-      const updateData: any = { status };
-      if (driverId) {
-        updateData.driverId = driverId;
-      }
-      
-      const order = await storage.updateOrder(id, updateData);
+      const validatedData = insertOrderSchema.partial().parse(req.body);
+      const order = await storage.updateOrder(id, validatedData);
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
-      // إنشاء إشعار عند تحديث حالة الطلب
-      try {
-        let statusMessage = '';
-        switch (status) {
-          case 'confirmed':
-            statusMessage = 'تم تأكيد الطلب وجاري التحضير';
-            break;
-          case 'preparing':
-            statusMessage = 'جاري تحضير الطلب';
-            break;
-          case 'on_way':
-            statusMessage = 'الطلب في الطريق إليك';
-            break;
-          case 'delivered':
-            statusMessage = 'تم تسليم الطلب بنجاح';
-            break;
-          case 'cancelled':
-            statusMessage = 'تم إلغاء الطلب';
-            break;
-          default:
-            statusMessage = `تم تحديث حالة الطلب`;
-        }
-        
-        await storage.createNotification({
-          type: 'order_update',
-          title: 'تحديث حالة الطلب',
-          message: `طلبك رقم ${order.orderNumber}: ${statusMessage}`,
-          recipientType: 'customer',
-          recipientId: order.customerPhone,
-          orderId: order.id
-        });
-      } catch (notificationError) {
-        console.error('Error creating notification:', notificationError);
-      }
-      
       res.json(order);
     } catch (error) {
       res.status(400).json({ message: "Invalid order data" });
@@ -502,26 +460,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get orders by driverId
   app.get("/api/orders", async (req, res) => {
     try {
-      const { driverId, status } = req.query;
+      const { driverId } = req.query;
       const orders = await storage.getOrders();
       
       if (driverId) {
-        let driverOrders = orders.filter(order => order.driverId === driverId);
-        
-        // فلترة حسب الحالة إذا تم تحديدها
-        if (status) {
-          const statusArray = (status as string).split(',');
-          driverOrders = driverOrders.filter(order => statusArray.includes(order.status || 'pending'));
-        }
-        
+        const driverOrders = orders.filter(order => order.driverId === driverId);
         return res.json(driverOrders);
-      }
-      
-      // إذا لم يكن هناك driverId، فلترة حسب الحالة فقط
-      if (status) {
-        const statusArray = (status as string).split(',');
-        const filteredOrders = orders.filter(order => statusArray.includes(order.status || 'pending'));
-        return res.json(filteredOrders);
       }
       
       res.json(orders);

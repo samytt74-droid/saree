@@ -51,7 +51,7 @@ router.post('/admin/login', async (req, res) => {
     }
 
     // التحقق من كلمة المرور (مقارنة مباشرة بدون تشفير)
-    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    const isPasswordValid = password === admin.password;
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -108,7 +108,6 @@ router.post('/driver/login', async (req, res) => {
       .limit(1);
 
     if (driverResult.length === 0) {
-      console.log('❌ السائق غير موجود:', phone);
       return res.status(401).json({
         success: false,
         message: 'بيانات الدخول غير صحيحة'
@@ -116,11 +115,9 @@ router.post('/driver/login', async (req, res) => {
     }
 
     const driver = driverResult[0];
-    console.log('✅ تم العثور على السائق:', driver.name);
 
     // التحقق من حالة الحساب
     if (!driver.isActive) {
-      console.log('❌ حساب السائق غير مفعل:', driver.name);
       return res.status(401).json({
         success: false,
         message: 'الحساب غير مفعل'
@@ -128,10 +125,9 @@ router.post('/driver/login', async (req, res) => {
     }
 
     // التحقق من كلمة المرور (مقارنة مباشرة بدون تشفير)
-    const isPasswordValid = await bcrypt.compare(password, driver.password);
+    const isPasswordValid = password === driver.password;
 
     if (!isPasswordValid) {
-      console.log('❌ كلمة المرور غير صحيحة للسائق:', driver.name);
       return res.status(401).json({
         success: false,
         message: 'بيانات الدخول غير صحيحة'
@@ -150,10 +146,6 @@ router.post('/driver/login', async (req, res) => {
         id: driver.id,
         name: driver.name,
         phone: driver.phone,
-        isAvailable: driver.isAvailable,
-        isActive: driver.isActive,
-        currentLocation: driver.currentLocation,
-        earnings: driver.earnings,
         userType: 'driver'
       },
       message: 'تم تسجيل الدخول بنجاح'

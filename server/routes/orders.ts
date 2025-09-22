@@ -1,7 +1,6 @@
 import express from "express";
 import { storage } from "../storage.js";
 import * as schema from "../../shared/schema.js";
-import { randomUUID } from "crypto";
 
 const router = express.Router();
 
@@ -54,11 +53,10 @@ router.post("/", async (req, res) => {
     }
 
     // إنشاء رقم طلب فريد
-    const orderNumber = `ORD${Date.now()}`;
+    const orderNumber = `ORD-${Date.now()}`;
 
     // إنشاء الطلب
     const orderData = {
-      id: randomUUID(),
       orderNumber,
       customerName,
       customerPhone,

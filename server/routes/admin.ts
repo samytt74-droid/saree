@@ -1,6 +1,7 @@
 import express from "express";
 import { storage } from "../storage";
-import bcrypt from 'bcryptjs';
+// تم حذف نظام المصادقة
+// تم حذف bcrypt - لا حاجة لتشفير كلمات المرور بعد إزالة نظام المصادقة
 import { z } from "zod";
 import { eq, and, desc, sql, or, like, asc, inArray } from "drizzle-orm";
 import {
@@ -416,20 +417,6 @@ router.delete("/restaurants/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
-    // حذف عناصر القائمة المرتبطة بالمطعم أولاً
-    const menuItems = await storage.getMenuItems(id);
-    for (const item of menuItems) {
-      await storage.deleteMenuItem(item.id);
-    }
-    
-    // حذف الطلبات المرتبطة بالمطعم (تحويل حالتها إلى cancelled)
-    const restaurantOrders = await storage.getOrdersByRestaurant(id);
-    for (const order of restaurantOrders) {
-      if (order.status !== 'delivered' && order.status !== 'cancelled') {
-        await storage.updateOrder(order.id, { status: 'cancelled' });
-      }
-    }
-    
     const success = await storage.deleteRestaurant(id);
     
     if (!success) {
@@ -631,13 +618,9 @@ router.post("/drivers", async (req, res) => {
       });
     }
     
-    // تشفير كلمة المرور
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    
     // التحقق من صحة البيانات مع الحقول المطلوبة
     const driverData = {
       ...req.body,
-      password: hashedPassword,
       // التأكد من وجود الحقول الافتراضية
       isAvailable: req.body.isAvailable !== undefined ? req.body.isAvailable : true,
       isActive: req.body.isActive !== undefined ? req.body.isActive : true,
@@ -669,17 +652,8 @@ router.put("/drivers/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
-    // تشفير كلمة المرور الجديدة إذا تم توفيرها
-    const updateData = { ...req.body };
-    if (updateData.password && updateData.password.trim()) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
-    } else {
-      // إزالة كلمة المرور من البيانات إذا كانت فارغة
-      delete updateData.password;
-    }
-    
     // التحقق من صحة البيانات المحدثة (جزئي)
-    const validatedData = insertDriverSchema.partial().parse(updateData);
+    const validatedData = insertDriverSchema.partial().parse(req.body);
     
     const updatedDriver = await dbStorage.updateDriver(id, validatedData);
     
