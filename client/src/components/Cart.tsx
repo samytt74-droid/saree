@@ -197,37 +197,11 @@ export function Cart({ isOpen, onClose }: CartProps) {
                     </div>
                     <div className="flex justify-between">
                       <span>رسوم التوصيل:</span>
-                      <span>
-                        {isCalculatingFee ? (
-                          <span className="text-sm">جاري الحساب...</span>
-                        ) : (
-                          `${(deliveryInfo?.deliveryFee || state.deliveryFee).toFixed(2)} ر.ي`
-                        )}
-                      </span>
+                      <span>{state.deliveryFee.toFixed(2)} ر.ي</span>
                     </div>
-                    {deliveryInfo && deliveryInfo.distance > 0 && (
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <div className="flex justify-between">
-                          <span>المسافة:</span>
-                          <span>{deliveryInfo.distance} كم</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>رسوم أساسية:</span>
-                          <span>{deliveryInfo.baseFee.toFixed(2)} ر.ي</span>
-                        </div>
-                        {deliveryInfo.distanceFee > 0 && (
-                          <div className="flex justify-between">
-                            <span>رسوم المسافة:</span>
-                            <span>{deliveryInfo.distanceFee.toFixed(2)} ر.ي</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>المجموع الكلي:</span>
-                      <span className="text-red-500">
-                        {(state.subtotal + (deliveryInfo?.deliveryFee || state.deliveryFee)).toFixed(2)} ر.ي
-                      </span>
+                      <span className="text-red-500">{state.total.toFixed(2)} ر.ي</span>
                     </div>
                   </div>
 

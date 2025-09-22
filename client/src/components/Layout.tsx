@@ -21,23 +21,6 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isFeatureEnabled } = useUiSettings();
   
-  // الاستماع لتحديثات إعدادات الواجهة
-  useEffect(() => {
-    const handleUiSettingsChange = (event: CustomEvent) => {
-      const { key, value } = event.detail;
-      
-      // إعادة تحميل الصفحة للتطبيقات الحساسة للإعدادات
-      if (['show_admin_panel', 'show_delivery_app', 'show_orders_page', 'show_track_orders_page'].includes(key)) {
-        // تحديث فوري للتنقل
-        window.location.reload();
-      }
-    };
-
-    window.addEventListener('uiSettingsChanged', handleUiSettingsChange as EventListener);
-    return () => {
-      window.removeEventListener('uiSettingsChanged', handleUiSettingsChange as EventListener);
-    };
-  }, []);
   
   // Get visibility settings from UiSettings instead of localStorage
   const showAdminPanel = isFeatureEnabled('show_admin_panel');
