@@ -44,7 +44,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
   const [currentDriver, setCurrentDriver] = useState<Driver | null>(null);
   const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showOrderDetailsDialog, setShowOrderDetailsDialog] = useState(false);
 
   // التحقق من تسجيل الدخول عند تحميل المكون
   useEffect(() => {
@@ -354,7 +354,11 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
     }
   };
 
-
+  // عرض تفاصيل الطلب
+  const handleShowOrderDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setShowOrderDetailsDialog(true);
+  };
 
   // فتح خرائط جوجل للتنقل
   const openGoogleMaps = (address: string) => {
@@ -477,7 +481,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
               <>
                 <Button
                   variant="outline"
-                  onClick={() => showOrderDetails(order)}
+                  onClick={() => handleShowOrderDetails(order)}
                   className="gap-2"
                   data-testid={`view-details-${order.id}`}
                 >
@@ -570,7 +574,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">تطبيق السائق</h1>
-                <p className="text-sm text-gray-500">مرحباً {currentDriver.name}</p>
+                <p className="text-sm text-gray-500">مرحباً {currentDriver?.name}</p>
               </div>
             </div>
             
@@ -833,10 +837,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
       </div>
       
       {/* نافذة تفاصيل الطلب */}
-      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
+      <Dialog open={showOrderDetailsDialog} onOpenChange={setShowOrderDetailsDialog}>
         <DialogContent className="max-w-md" dir="rtl">
           <DialogHeader>
-            <DialogTitle>تفاصيل الطلب #{selectedOrder?.id.slice(0, 8)}</DialogTitle>
+            <DialogTitle>تفاصيل الطلب #{selectedOrder?.id?.slice(0, 8)}</DialogTitle>
           </DialogHeader>
           
           {selectedOrder && (
