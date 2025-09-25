@@ -354,11 +354,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
     }
   };
 
-  // عرض تفاصيل الطلب
-  const showOrderDetails = (order: Order) => {
-    setSelectedOrder(order);
-    setShowOrderDetails(true);
-  };
+
 
   // فتح خرائط جوجل للتنقل
   const openGoogleMaps = (address: string) => {
