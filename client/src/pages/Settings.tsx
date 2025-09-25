@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
-import { UiControlPanel } from '@/components/UiControlPanel';
 import { PermissionsManager } from '@/components/PermissionsManager';
 
 interface SettingItem {
@@ -202,7 +201,7 @@ export default function Settings() {
 
       <section className="p-4">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <SettingsIcon className="h-4 w-4" />
               إعدادات عامة
@@ -210,10 +209,6 @@ export default function Settings() {
             <TabsTrigger value="permissions" className="flex items-center gap-2">
               <Lock className="h-4 w-4" />
               الصلاحيات
-            </TabsTrigger>
-            <TabsTrigger value="ui-control" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              تحكم الواجهة
             </TabsTrigger>
           </TabsList>
           
@@ -345,10 +340,6 @@ export default function Settings() {
                 variant: granted ? 'default' : 'destructive',
               });
             }} />
-          </TabsContent>
-          
-          <TabsContent value="ui-control" className="mt-6">
-            <UiControlPanel />
           </TabsContent>
         </Tabs>
       </section>

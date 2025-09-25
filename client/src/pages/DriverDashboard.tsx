@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Truck, 
@@ -25,7 +26,9 @@ import {
   AlertCircle,
   RefreshCw,
   Eye,
-  MessageCircle
+  MessageCircle,
+  Store,
+  Map
 } from 'lucide-react';
 import type { Order, Driver } from '@shared/schema';
 
@@ -40,6 +43,8 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
   const [driverStatus, setDriverStatus] = useState<'available' | 'busy' | 'offline'>('offline');
   const [currentDriver, setCurrentDriver] = useState<Driver | null>(null);
   const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
   // التحقق من تسجيل الدخول عند تحميل المكون
   useEffect(() => {
@@ -65,10 +70,12 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
   const { data: availableOrders = [], isLoading: availableLoading, refetch: refetchAvailable } = useQuery<Order[]>({
     queryKey: ['/api/orders', { status: 'confirmed', available: true }],
     queryFn: async () => {
-      const response = await fetch('/api/orders?status=confirmed&available=true');
+      const response = await fetch('/api/orders?status=confirmed');
       if (!response.ok) throw new Error('فشل في جلب الطلبات المتاحة');
       const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      // فلترة الطلبات غير المُعيَّنة لسائق
+      const availableOrders = Array.isArray(data) ? data.filter((order: Order) => !order.driverId) : [];
+      return availableOrders;
     },
     enabled: !!currentDriver && driverStatus === 'available',
     refetchInterval: 5000, // تحديث كل 5 ثوانِ
@@ -106,10 +113,15 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
     mutationFn: async (orderId: string) => {
       if (!currentDriver?.id) throw new Error('معرف السائق غير موجود');
       
-      const response = await fetch(`/api/orders/${orderId}/assign-driver`, {
+      const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driverId: currentDriver.id }),
+        body: JSON.stringify({ 
+          driverId: currentDriver.id,
+          status: 'preparing',
+          updatedBy: currentDriver.id,
+          updatedByType: 'driver'
+        }),
       });
       
       if (!response.ok) {
@@ -319,6 +331,35 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
     return `${num.toFixed(2)} ريال`;
   };
 
+  // فتح خرائط جوجل للمطعم
+  const openRestaurantLocation = (order: Order) => {
+    // في التطبيق الحقيقي، سنجلب موقع المطعم من قاعدة البيانات
+    // للآن نستخدم موقع افتراضي لصنعاء
+    const restaurantLat = 15.3694;
+    const restaurantLng = 44.1910;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${restaurantLat},${restaurantLng}`;
+    window.open(url, '_blank');
+  };
+
+  // فتح خرائط جوجل للعميل
+  const openCustomerLocation = (order: Order) => {
+    if (order.customerLocationLat && order.customerLocationLng) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${order.customerLocationLat},${order.customerLocationLng}`;
+      window.open(url, '_blank');
+    } else {
+      // استخدام العنوان النصي
+      const encodedAddress = encodeURIComponent(order.deliveryAddress);
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+      window.open(url, '_blank');
+    }
+  };
+
+  // عرض تفاصيل الطلب
+  const showOrderDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+  };
+
   // فتح خرائط جوجل للتنقل
   const openGoogleMaps = (address: string) => {
     const encodedAddress = encodeURIComponent(address);
@@ -397,6 +438,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
           {/* معلومات العميل */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
+              <Store className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">من: مطعم تجريبي</span>
+            </div>
+            <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">{order.customerPhone}</span>
             </div>
@@ -435,6 +480,15 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
             {type === 'available' && (
               <>
                 <Button
+                  variant="outline"
+                  onClick={() => showOrderDetails(order)}
+                  className="gap-2"
+                  data-testid={`view-details-${order.id}`}
+                >
+                  <Eye className="h-4 w-4" />
+                  التفاصيل
+                </Button>
+                <Button
                   onClick={() => acceptOrderMutation.mutate(order.id)}
                   disabled={acceptOrderMutation.isPending}
                   className="flex-1 bg-green-600 hover:bg-green-700"
@@ -443,18 +497,21 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   قبول الطلب
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => openGoogleMaps(order.deliveryAddress)}
-                  data-testid={`view-location-${order.id}`}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
               </>
             )}
 
             {(type === 'accepted' || type === 'inProgress') && (
               <>
+                <Button
+                  variant="outline"
+                  onClick={() => openRestaurantLocation(order)}
+                  className="gap-2"
+                  data-testid={`restaurant-location-${order.id}`}
+                >
+                  <Store className="h-4 w-4" />
+                  المطعم
+                </Button>
+                
                 <Button
                   variant="outline"
                   onClick={() => window.open(`tel:${order.customerPhone}`)}
@@ -467,7 +524,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
                 
                 <Button
                   variant="outline"
-                  onClick={() => openGoogleMaps(order.deliveryAddress)}
+                  onClick={() => openCustomerLocation(order)}
                   className="gap-2"
                   data-testid={`navigate-${order.id}`}
                 >
@@ -778,6 +835,105 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onLogout }) =>
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* نافذة تفاصيل الطلب */}
+      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تفاصيل الطلب #{selectedOrder?.id.slice(0, 8)}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <div className="space-y-4">
+              {/* معلومات المطعم */}
+              <Card>
+                <CardContent className="p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Store className="h-4 w-4" />
+                    معلومات المطعم
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>اسم المطعم:</strong> مطعم تجريبي</p>
+                    <p><strong>رقم الهاتف:</strong> +967771234567</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openRestaurantLocation(selectedOrder)}
+                      className="w-full mt-2"
+                    >
+                      <Map className="h-4 w-4 mr-2" />
+                      عرض موقع المطعم على الخريطة
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* معلومات العميل */}
+              <Card>
+                <CardContent className="p-4">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    معلومات العميل
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>الاسم:</strong> {selectedOrder.customerName}</p>
+                    <p><strong>الهاتف:</strong> {selectedOrder.customerPhone}</p>
+                    <p><strong>العنوان:</strong> {selectedOrder.deliveryAddress}</p>
+                    {selectedOrder.notes && (
+                      <p><strong>ملاحظات:</strong> {selectedOrder.notes}</p>
+                    )}
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`tel:${selectedOrder.customerPhone}`)}
+                        className="flex-1"
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        اتصال
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openCustomerLocation(selectedOrder)}
+                        className="flex-1"
+                      >
+                        <Navigation className="h-4 w-4 mr-2" />
+                        التوجيه
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* تفاصيل الطلب */}
+              <Card>
+                <CardContent className="p-4">
+                  <h4 className="font-medium mb-2">تفاصيل الطلب</h4>
+                  <div className="space-y-2">
+                    {getOrderItems(selectedOrder.items).map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between text-sm">
+                        <span>{item.name} × {item.quantity}</span>
+                        <span>{formatCurrency(item.price * item.quantity)}</span>
+                      </div>
+                    ))}
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between font-medium">
+                        <span>المجموع:</span>
+                        <span className="text-green-600">{formatCurrency(selectedOrder.totalAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>عمولتك:</span>
+                        <span className="text-green-600">{formatCurrency(Math.round(parseFloat(selectedOrder.totalAmount || '0') * 0.15))}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

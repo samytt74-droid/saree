@@ -192,7 +192,7 @@ export default function AdminLoginPage() {
                 <p className="text-sm text-green-800 font-medium mb-2">🔑 بيانات المدير الافتراضية (تطوير):</p>
                 <div className="text-xs text-green-700 space-y-1">
                   <p>البريد الإلكتروني: admin@alsarie-one.com</p>
-                  <p>كلمة المرور: admin123456</p>
+                  <p>كلمة المرور: 777146387</p>
                 </div>
               </div>
             )}

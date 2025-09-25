@@ -1,16 +1,10 @@
 import { useState } from 'react';
 import { Minus, Plus, Trash2, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
-import { MapPicker } from './MapPicker';
+import { GoogleMapsLocationPicker, LocationData } from './GoogleMapsLocationPicker';
 import { apiRequest } from '@/lib/queryClient';
-
-interface LocationData {
-  lat: number;
-  lng: number;
-  address: string;
-  area?: string;
-  city?: string;
-}
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface CartProps {
   isOpen: boolean;
@@ -21,12 +15,41 @@ export function Cart({ isOpen, onClose }: CartProps) {
   const { state, updateQuantity, removeItem, addNotes, clearCart } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(5); // رسوم افتراضية
+  const { toast } = useToast();
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     phone: '',
     notes: ''
   });
 
+  // جلب إعدادات رسوم التوصيل
+  const { data: uiSettings } = useQuery({
+    queryKey: ['/api/admin/ui-settings'],
+  });
+
+  // حساب رسوم التوصيل بناءً على المسافة
+  useEffect(() => {
+    if (selectedLocation && selectedLocation.distance) {
+      const baseFee = parseFloat(uiSettings?.find((s: any) => s.key === 'delivery_fee_default')?.value || '5');
+      const perKmFee = parseFloat(uiSettings?.find((s: any) => s.key === 'delivery_fee_per_km')?.value || '2');
+      
+      // حساب رسوم التوصيل: الرسوم الأساسية + (المسافة × رسوم الكيلومتر)
+      const calculatedFee = baseFee + (selectedLocation.distance * perKmFee);
+      setDeliveryFee(Math.round(calculatedFee));
+    }
+  }, [selectedLocation, uiSettings]);
+
+  // الحصول على موقع المطعم للحساب
+  const getRestaurantLocation = () => {
+    if (state.restaurantId) {
+      // في التطبيق الحقيقي، سنجلب موقع المطعم من API
+      // للآن نستخدم موقع افتراضي
+      return { lat: 15.3694, lng: 44.1910 };
+    }
+    return undefined;
+  };
   if (!isOpen) return null;
 
   // Function to save customer info to user profile
@@ -49,12 +72,20 @@ export function Cart({ isOpen, onClose }: CartProps) {
 
   const handleCheckout = async () => {
     if (!selectedLocation) {
-      alert('الرجاء تحديد موقع التوصيل');
+      toast({
+        title: "موقع التوصيل مطلوب",
+        description: "يرجى تحديد موقع التوصيل من الخريطة",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!customerInfo.name || !customerInfo.phone) {
-      alert('الرجاء إدخال الاسم ورقم الهاتف');
+      toast({
+        title: "معلومات ناقصة",
+        description: "يرجى إدخال الاسم ورقم الهاتف",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -63,12 +94,14 @@ export function Cart({ isOpen, onClose }: CartProps) {
         customerName: customerInfo.name,
         customerPhone: customerInfo.phone,
         deliveryAddress: selectedLocation.address,
+        customerLocationLat: selectedLocation.lat,
+        customerLocationLng: selectedLocation.lng,
         notes: customerInfo.notes,
         paymentMethod: 'cash',
         items: JSON.stringify(state.items),
         subtotal: state.subtotal,
-        deliveryFee: state.deliveryFee,
-        totalAmount: state.total,
+        deliveryFee: deliveryFee,
+        totalAmount: state.subtotal + deliveryFee,
         restaurantId: state.restaurantId
       };
 
@@ -86,7 +119,10 @@ export function Cart({ isOpen, onClose }: CartProps) {
         // Save customer info to profile after successful order
         await saveCustomerInfoToProfile();
         
-        alert(`تم تأكيد طلبك! رقم الطلب: ${order.orderNumber}`);
+        toast({
+          title: "تم تأكيد طلبك بنجاح! 🎉",
+          description: `رقم الطلب: ${order.order?.orderNumber || order.orderNumber}`,
+        });
         clearCart();
         onClose();
       } else {
@@ -94,7 +130,11 @@ export function Cart({ isOpen, onClose }: CartProps) {
       }
     } catch (error) {
       console.error('Order error:', error);
-      alert('حدث خطأ في إرسال الطلب. الرجاء المحاولة مرة أخرى.');
+      toast({
+        title: "خطأ في إرسال الطلب",
+        description: "يرجى المحاولة مرة أخرى",
+        variant: "destructive",
+      });
     }
   };
 
@@ -197,11 +237,16 @@ export function Cart({ isOpen, onClose }: CartProps) {
                     </div>
                     <div className="flex justify-between">
                       <span>رسوم التوصيل:</span>
-                      <span>{state.deliveryFee.toFixed(2)} ر.ي</span>
+                      <span>{deliveryFee.toFixed(2)} ر.ي</span>
+                      {selectedLocation?.distance && (
+                        <span className="text-xs text-muted-foreground">
+                          ({selectedLocation.distance.toFixed(1)} كم)
+                        </span>
+                      )}
                     </div>
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>المجموع الكلي:</span>
-                      <span className="text-red-500">{state.total.toFixed(2)} ر.ي</span>
+                      <span className="text-red-500">{(state.subtotal + deliveryFee).toFixed(2)} ر.ي</span>
                     </div>
                   </div>
 
@@ -242,11 +287,42 @@ export function Cart({ isOpen, onClose }: CartProps) {
                     </div>
                   </div>
 
-                  {/* Location Picker */}
-                  <MapPicker
-                    onLocationSelect={setSelectedLocation}
-                    className="border-0 shadow-none p-0"
-                  />
+                  {/* تحديد الموقع */}
+                  <div>
+                    <h3 className="font-medium mb-2">موقع التوصيل *</h3>
+                    {selectedLocation ? (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-green-800">{selectedLocation.area}</p>
+                            <p className="text-sm text-green-600">{selectedLocation.address}</p>
+                            {selectedLocation.distance && (
+                              <p className="text-xs text-green-600">
+                                المسافة: {selectedLocation.distance.toFixed(1)} كم
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowLocationPicker(true)}
+                          >
+                            تغيير
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowLocationPicker(true)}
+                        data-testid="button-select-location"
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />
+                        تحديد موقع التوصيل
+                      </Button>
+                    )}
+                  </div>
 
                   {/* Action Buttons */}
                   <div className="flex gap-2">
@@ -270,5 +346,14 @@ export function Cart({ isOpen, onClose }: CartProps) {
         </div>
       </div>
     </div>
+    
+    {/* نافذة تحديد الموقع */}
+    <GoogleMapsLocationPicker
+      isOpen={showLocationPicker}
+      onClose={() => setShowLocationPicker(false)}
+      onLocationSelect={setSelectedLocation}
+      restaurantLocation={getRestaurantLocation()}
+    />
+    </>
   );
 }
