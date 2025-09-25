@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Minus, Plus, Trash2, ShoppingBag, X } from 'lucide-react';
+import { useState, useEffect } from 'react'; // أضف useEffect
+import { Minus, Plus, Trash2, ShoppingBag, X, MapPin } from 'lucide-react'; // أضف MapPin
 import { useCart } from '../contexts/CartContext';
 import { GoogleMapsLocationPicker, LocationData } from './GoogleMapsLocationPicker';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button'; // أضف استيراد Button
 
 interface CartProps {
   isOpen: boolean;
@@ -345,15 +346,14 @@ export function Cart({ isOpen, onClose }: CartProps) {
           )}
         </div>
       </div>
+
+      {/* نافذة تحديد الموقع */}
+      <GoogleMapsLocationPicker
+        isOpen={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        onLocationSelect={setSelectedLocation}
+        restaurantLocation={getRestaurantLocation()}
+      />
     </div>
-    
-    {/* نافذة تحديد الموقع */}
-    <GoogleMapsLocationPicker
-      isOpen={showLocationPicker}
-      onClose={() => setShowLocationPicker(false)}
-      onLocationSelect={setSelectedLocation}
-      restaurantLocation={getRestaurantLocation()}
-    />
-    </>
   );
 }
