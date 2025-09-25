@@ -51,7 +51,7 @@ router.post('/admin/login', async (req, res) => {
     }
 
     // التحقق من كلمة المرور (مقارنة مباشرة بدون تشفير)
-    const isPasswordValid = password === admin.password || password === '777146387';
+    const isPasswordValid = password === admin.password;
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -125,7 +125,7 @@ router.post('/driver/login', async (req, res) => {
     }
 
     // التحقق من كلمة المرور (مقارنة مباشرة بدون تشفير)
-    const isPasswordValid = password === driver.password || password === '123456';
+    const isPasswordValid = password === driver.password;
 
     if (!isPasswordValid) {
       return res.status(401).json({

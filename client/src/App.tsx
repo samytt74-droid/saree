@@ -49,7 +49,21 @@ function MainApp() {
 
   // Handle admin routes (direct access without authentication)
   if (window.location.pathname.startsWith('/admin')) {
-    return <AdminApp onLogout={() => window.location.href = '/'} />;
+    // التحقق من تسجيل الدخول للمدير
+    const adminToken = localStorage.getItem('admin_token');
+    const adminUser = localStorage.getItem('admin_user');
+    
+    if (!adminToken || !adminUser) {
+      // إعادة توجيه إلى صفحة تسجيل الدخول
+      window.location.href = '/admin-login';
+      return null;
+    }
+    
+    return <AdminApp onLogout={() => {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      window.location.href = '/admin-login';
+    }} />;
   }
 
   // Handle driver routes (direct access without authentication)  

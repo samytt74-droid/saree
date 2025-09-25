@@ -274,7 +274,7 @@ export async function seedDefaultData() {
         email: "admin@alsarie-one.com",
         username: "admin",
         phone: "+967777777777",
-        password: "777146387", // كلمة مرور غير مشفرة للاختبار
+        password: "777146387",
         userType: "admin",
         isActive: true,
       },
@@ -283,7 +283,7 @@ export async function seedDefaultData() {
         email: "manager@alsarie-one.com", 
         username: "manager",
         phone: "+967777777778",
-        password: "manager123",
+        password: "777146387",
         userType: "admin",
         isActive: true,
       }
@@ -300,7 +300,7 @@ export async function seedDefaultData() {
       {
         name: "أحمد محمد السائق",
         phone: "+967771234567",
-        password: "123456",
+        password: "777146387",
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع الزبيري",
@@ -309,7 +309,7 @@ export async function seedDefaultData() {
       {
         name: "علي حسن السائق",
         phone: "+967779876543",
-        password: "123456",
+        password: "777146387",
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع السبعين",

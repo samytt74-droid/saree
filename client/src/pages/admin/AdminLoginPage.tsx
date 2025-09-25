@@ -187,15 +187,31 @@ export default function AdminLoginPage() {
             </form>
 
             {/* Demo Credentials - بيئة التطوير فقط */}
-            {(import.meta as any).env.DEV && (
+            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-sm text-green-800 font-medium mb-2">🔑 بيانات المدير الافتراضية:</p>
               <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-sm text-green-800 font-medium mb-2">🔑 بيانات المدير الافتراضية (تطوير):</p>
                 <div className="text-xs text-green-700 space-y-1">
                   <p>البريد الإلكتروني: admin@alsarie-one.com</p>
                   <p>كلمة المرور: 777146387</p>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFormData({
+                      email: 'admin@alsarie-one.com',
+                      password: '777146387'
+                    });
+                  }}
+                  className="w-full mt-2"
+                  disabled={isSubmitting}
+                >
+                  ملء البيانات تلقائياً
+                </Button>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 

@@ -17,6 +17,7 @@ app.use('/api', (req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
+  res.set('Last-Modified', new Date().toUTCString());
   next();
 });
 

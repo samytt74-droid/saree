@@ -43,6 +43,9 @@ export function UiSettingsProvider({ children }: { children: React.ReactNode }) 
 
   const updateSetting = async (key: string, value: string) => {
     try {
+      // تحديث الإعداد محلياً فوراً
+      setSettings(prev => ({ ...prev, [key]: value }));
+      
       const response = await fetch(`/api/admin/ui-settings/${key}`, {
         method: 'PUT',
         headers: {
@@ -52,10 +55,18 @@ export function UiSettingsProvider({ children }: { children: React.ReactNode }) 
       });
 
       if (response.ok) {
-        setSettings(prev => ({ ...prev, [key]: value }));
+        // تأكيد التحديث من الخادم
+        const updatedSetting = await response.json();
+        console.log('تم تحديث الإعداد:', key, '=', value);
+      } else {
+        // إعادة القيمة السابقة في حالة الفشل
+        await loadSettings();
+        throw new Error('فشل في تحديث الإعداد');
       }
     } catch (error) {
       console.error('خطأ في تحديث الإعداد:', error);
+      // إعادة تحميل الإعدادات في حالة الخطأ
+      await loadSettings();
     }
   };
 

@@ -49,6 +49,7 @@ export default function AdminRestaurants() {
 
   const { data: restaurantsData, isLoading: restaurantsLoading } = useQuery<{restaurants: Restaurant[], pagination: any}>({
     queryKey: ['/api/admin/restaurants'],
+    refetchInterval: 10000, // تحديث كل 10 ثوانِ
   });
 
   const restaurants = restaurantsData?.restaurants || [];

@@ -30,6 +30,7 @@ export default function AdminDrivers() {
 
   const { data: drivers, isLoading } = useQuery<Driver[]>({
     queryKey: ['/api/drivers'],
+    refetchInterval: 15000, // تحديث كل 15 ثانية
   });
 
   const createDriverMutation = useMutation({

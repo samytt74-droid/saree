@@ -1165,9 +1165,19 @@ router.delete("/users/:id", async (req, res) => {
 });
 
 // إدارة الملف الشخصي للمدير
-router.get("/profile", async (req: any, res) => {
+router.get("/profile", async (req, res) => {
   try {
-    const admin = req.admin;
+    // جلب المدير الافتراضي من قاعدة البيانات
+    const admins = await db.select().from(schema.adminUsers).where(
+      eq(schema.adminUsers.email, 'admin@alsarie-one.com')
+    );
+    
+    if (admins.length === 0) {
+      return res.status(404).json({ error: "المدير غير موجود" });
+    }
+    
+    const admin = admins[0];
+    
     // إرجاع بيانات المدير (بدون كلمة المرور)
     const adminProfile = {
       id: admin.id,
@@ -1188,10 +1198,20 @@ router.get("/profile", async (req: any, res) => {
 });
 
 // تحديث الملف الشخصي للمدير
-router.put("/profile", async (req: any, res) => {
+router.put("/profile", async (req, res) => {
   try {
     const { name, email, username, phone } = req.body;
-    const adminId = req.admin.id;
+    
+    // جلب المدير الافتراضي
+    const admins = await db.select().from(schema.adminUsers).where(
+      eq(schema.adminUsers.email, 'admin@alsarie-one.com')
+    );
+    
+    if (admins.length === 0) {
+      return res.status(404).json({ error: "المدير غير موجود" });
+    }
+    
+    const adminId = admins[0].id;
 
     if (!name || !email) {
       return res.status(400).json({ error: "الاسم والبريد الإلكتروني مطلوبان" });
@@ -1243,12 +1263,88 @@ router.put("/profile", async (req: any, res) => {
   }
 });
 
-// تم حذف مسار تغيير كلمة المرور - لا حاجة له بعد إزالة نظام المصادقة
+// تغيير كلمة المرور
+router.put("/change-password", async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "كلمة المرور الحالية والجديدة مطلوبتان" });
+    }
+    
+    // جلب المدير الافتراضي
+    const admins = await db.select().from(schema.adminUsers).where(
+      eq(schema.adminUsers.email, 'admin@alsarie-one.com')
+    );
+    
+    if (admins.length === 0) {
+      return res.status(404).json({ error: "المدير غير موجود" });
+    }
+    
+    const admin = admins[0];
+    
+    // التحقق من كلمة المرور الحالية
+    if (admin.password !== currentPassword) {
+      return res.status(400).json({ error: "كلمة المرور الحالية غير صحيحة" });
+    }
+    
+    // تحديث كلمة المرور
+    await db.update(schema.adminUsers)
+      .set({ password: newPassword })
+      .where(eq(schema.adminUsers.id, admin.id));
+    
+    res.json({ success: true, message: "تم تغيير كلمة المرور بنجاح" });
+  } catch (error) {
+    console.error("خطأ في تغيير كلمة المرور:", error);
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
 
 // UI Settings Routes
 router.get("/ui-settings", async (req, res) => {
   try {
-    const settings = await dbStorage.getUiSettings();
+    let settings = await dbStorage.getUiSettings();
+    
+    // إضافة الإعدادات الافتراضية إذا لم تكن موجودة
+    const defaultSettings = [
+      { key: 'show_categories', value: 'true', description: 'عرض تصنيفات المطاعم' },
+      { key: 'show_search_bar', value: 'true', description: 'عرض شريط البحث' },
+      { key: 'show_special_offers', value: 'true', description: 'عرض العروض الخاصة' },
+      { key: 'show_orders_page', value: 'true', description: 'عرض صفحة الطلبات' },
+      { key: 'show_track_orders_page', value: 'true', description: 'عرض صفحة تتبع الطلبات' },
+      { key: 'show_admin_panel', value: 'false', description: 'عرض لوحة التحكم' },
+      { key: 'show_delivery_app', value: 'false', description: 'عرض تطبيق التوصيل' },
+      { key: 'show_ratings', value: 'true', description: 'عرض التقييمات' },
+      { key: 'show_delivery_time', value: 'true', description: 'عرض وقت التوصيل' },
+      { key: 'show_minimum_order', value: 'true', description: 'عرض الحد الأدنى للطلب' },
+      { key: 'show_restaurant_description', value: 'true', description: 'عرض وصف المطعم' },
+      { key: 'enable_location_services', value: 'true', description: 'تفعيل خدمات الموقع' },
+      { key: 'app_name', value: 'السريع ون', description: 'اسم التطبيق' },
+      { key: 'delivery_fee_default', value: '5', description: 'رسوم التوصيل الافتراضية' },
+      { key: 'opening_time', value: '08:00', description: 'وقت الفتح' },
+      { key: 'closing_time', value: '23:00', description: 'وقت الإغلاق' },
+      { key: 'store_status', value: 'مفتوح', description: 'حالة المتجر' }
+    ];
+    
+    // إضافة الإعدادات المفقودة
+    for (const defaultSetting of defaultSettings) {
+      const exists = settings.find(s => s.key === defaultSetting.key);
+      if (!exists) {
+        try {
+          const newSetting = await dbStorage.createUiSetting({
+            key: defaultSetting.key,
+            value: defaultSetting.value,
+            category: 'ui',
+            description: defaultSetting.description,
+            isActive: true
+          });
+          settings.push(newSetting);
+        } catch (error) {
+          console.error(`خطأ في إنشاء الإعداد ${defaultSetting.key}:`, error);
+        }
+      }
+    }
+    
     res.json(settings);
   } catch (error) {
     console.error('خطأ في جلب إعدادات الواجهة:', error);

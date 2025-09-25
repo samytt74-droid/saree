@@ -385,21 +385,22 @@ router.put("/:id", async (req, res) => {
 });
 
 // جلب الطلبات حسب العميل
-router.get("/customer/:phone", async (req, res) => {
+router.get("/customer/:customerId", async (req, res) => {
   try {
-    const phone = req.params.phone.trim().replace(/\s+/g, '');
+    const { customerId } = req.params;
     
-    if (!phone) {
+    if (!customerId) {
       return res.status(400).json({ 
-        error: "رقم الهاتف مطلوب"
+        error: "معرف العميل مطلوب"
       });
     }
     
     const orders = await storage.getOrders();
     
-    // فلترة الطلبات حسب رقم الهاتف
+    // فلترة الطلبات حسب معرف العميل أو رقم الهاتف
     const customerOrders = orders.filter(order => 
-      order.customerPhone && order.customerPhone.replace(/\s+/g, '') === phone
+      order.customerId === customerId || 
+      (order.customerPhone && order.customerPhone.replace(/\s+/g, '') === customerId.replace(/\s+/g, ''))
     );
     
     // ترتيب حسب التاريخ (الأحدث أولاً)

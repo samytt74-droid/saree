@@ -21,15 +21,24 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isFeatureEnabled } = useUiSettings();
   
-  
   // Get visibility settings from UiSettings instead of localStorage
   const showAdminPanel = isFeatureEnabled('show_admin_panel');
   const showDeliveryApp = isFeatureEnabled('show_delivery_app'); 
   const showOrdersPage = isFeatureEnabled('show_orders_page');
   const showTrackOrdersPage = isFeatureEnabled('show_track_orders_page');
 
-  // Settings are now handled automatically by UiSettings context
-  // No need for manual event listeners
+  // Listen for navigation settings changes
+  useEffect(() => {
+    const handleNavigationChange = () => {
+      // Force re-render by updating a state
+      setLocation(location); // This will trigger a re-render
+    };
+
+    window.addEventListener('navigationSettingsChanged', handleNavigationChange);
+    return () => {
+      window.removeEventListener('navigationSettingsChanged', handleNavigationChange);
+    };
+  }, [location, setLocation]);
 
   const isAdminPage = location.startsWith('/admin');
   const isDeliveryPage = location.startsWith('/delivery');

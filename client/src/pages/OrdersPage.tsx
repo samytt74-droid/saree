@@ -52,9 +52,9 @@ export default function OrdersPage() {
 
   // Fetch orders from database
   const { data: orders = [], isLoading, error } = useQuery<Order[]>({
-    queryKey: ['orders', customerId],
+    queryKey: ['/api/orders/customer', customerId],
     queryFn: async () => {
-      const response = await fetch(`/api/customers/${customerId}/orders`);
+      const response = await fetch(`/api/orders/customer/${customerId}`);
       if (!response.ok) {
         throw new Error('فشل في جلب الطلبات');
       }
@@ -86,7 +86,8 @@ export default function OrdersPage() {
       
       return processedOrders;
     },
-    retry: 1
+    retry: 1,
+    refetchInterval: 10000, // تحديث كل 10 ثوانِ
   });
 
   // Mock fallback orders for demo if no orders in database

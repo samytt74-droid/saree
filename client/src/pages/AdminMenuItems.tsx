@@ -62,6 +62,7 @@ export default function AdminMenuItems() {
       return response.json();
     },
     enabled: !!selectedRestaurant,
+    refetchInterval: 10000, // تحديث كل 10 ثوانِ
   });
 
   const createMenuItemMutation = useMutation({

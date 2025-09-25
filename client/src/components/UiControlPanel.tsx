@@ -25,10 +25,15 @@ export function UiControlPanel() {
     // Also save to settings for persistence
     updateSetting(key, enabled.toString());
     
-    // Trigger a custom event to notify Layout component
+    // Trigger a custom event to notify Layout component immediately
     window.dispatchEvent(new CustomEvent('navigationSettingsChanged', {
       detail: { key, enabled }
     }));
+    
+    // Force refresh of UiSettings context
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   return (

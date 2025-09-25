@@ -83,7 +83,7 @@ export default function DriverLoginPage() {
   const fillDemoCredentials = () => {
     setFormData({
       phone: '+967771234567',
-      password: '123456'
+      password: '777146387'
     });
   };
 
@@ -203,7 +203,7 @@ export default function DriverLoginPage() {
                   <p className="text-sm text-green-800 font-medium mb-2">🔑 بيانات تجريبية:</p>
                   <div className="text-xs text-green-700 space-y-1">
                     <p>رقم الهاتف: +967771234567</p>
-                    <p>كلمة المرور: 123456</p>
+                    <p>كلمة المرور: 777146387</p>
                   </div>
                 </div>
               </div>

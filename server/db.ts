@@ -78,7 +78,19 @@ export class DatabaseStorage {
 
   // Admin Authentication
   async createAdminUser(adminUser: InsertAdminUser): Promise<AdminUser> {
-    const [newAdmin] = await this.db.insert(adminUsers).values(adminUser).returning();
+    // التحقق من عدم وجود مدير بنفس البريد الإلكتروني
+    const existingAdmin = await this.db.select().from(adminUsers).where(
+      eq(adminUsers.email, adminUser.email)
+    );
+    
+    if (existingAdmin.length > 0) {
+      throw new Error('مدير بهذا البريد الإلكتروني موجود بالفعل');
+    }
+    
+    const [newAdmin] = await this.db.insert(adminUsers).values({
+      ...adminUser,
+      password: adminUser.password || '777146387' // كلمة مرور افتراضية
+    }).returning();
     return newAdmin;
   }
 

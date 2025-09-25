@@ -22,14 +22,17 @@ export default function Home() {
   // Fetch data from database
   const { data: restaurants, isLoading: restaurantsLoading } = useQuery<Restaurant[]>({
     queryKey: ['/api/restaurants'],
+    refetchInterval: 30000, // تحديث كل 30 ثانية
   });
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
+    refetchInterval: 60000, // تحديث كل دقيقة
   });
 
   const { data: offers, isLoading: offersLoading } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/special-offers'],
+    refetchInterval: 20000, // تحديث كل 20 ثانية
   });
 
   // Filter restaurants based on selected category

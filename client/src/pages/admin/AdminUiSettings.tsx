@@ -61,6 +61,15 @@ export default function AdminUiSettings() {
         delete newChanges[variables.key];
         return newChanges;
       });
+      
+      // Trigger immediate UI update for navigation settings
+      if (['show_admin_panel', 'show_delivery_app', 'show_orders_page', 'show_track_orders_page'].includes(variables.key)) {
+        localStorage.setItem(variables.key, variables.value);
+        window.dispatchEvent(new CustomEvent('navigationSettingsChanged', {
+          detail: { key: variables.key, enabled: variables.value === 'true' }
+        }));
+      }
+      
       toast({
         title: "تم حفظ الإعداد",
         description: "تم تحديث الإعداد بنجاح",

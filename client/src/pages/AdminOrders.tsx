@@ -17,7 +17,9 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: orders, isLoading } = useQuery<Order[]>({
-    queryKey: statusFilter !== 'all' ? ['/api/orders', statusFilter] : ['/api/orders'],
+    queryKey: ['/api/admin/orders', statusFilter],
+    refetchInterval: 5000, // تحديث كل 5 ثوانِ
+    refetchIntervalInBackground: true,
   });
 
   const updateOrderStatusMutation = useMutation({

@@ -16,10 +16,12 @@ export default function Restaurant() {
 
   const { data: restaurant, isLoading: restaurantLoading } = useQuery<Restaurant>({
     queryKey: ['/api/restaurants', id],
+    refetchInterval: 30000,
   });
 
   const { data: menuItems, isLoading: menuLoading } = useQuery<MenuItem[]>({
     queryKey: ['/api/restaurants', id, 'menu'],
+    refetchInterval: 20000,
   });
 
 const menuCategories = menuItems 

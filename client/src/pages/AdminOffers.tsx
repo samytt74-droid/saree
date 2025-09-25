@@ -33,6 +33,7 @@ export default function AdminOffers() {
 
   const { data: offers, isLoading } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/admin/special-offers'],
+    refetchInterval: 15000, // تحديث كل 15 ثانية
   });
 
   const createOfferMutation = useMutation({
