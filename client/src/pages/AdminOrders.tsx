@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, CheckCircle, XCircle, Phone, MapPin, Filter, Navigation } from 'lucide-react';
+import { Package, CheckCircle, XCircle, Phone, MapPin, Filter, Navigation, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +14,7 @@ export default function AdminOrders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: orders, isLoading } = useQuery<Order[]>({
     queryKey: statusFilter !== 'all' ? ['/api/orders', statusFilter] : ['/api/orders'],
@@ -77,6 +79,15 @@ export default function AdminOrders() {
   const filteredOrders = orders?.filter(order => {
     if (statusFilter === 'all') return true;
     return order.status === statusFilter;
+  }).filter(order => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      order.customerName?.toLowerCase().includes(search) ||
+      order.customerPhone?.toLowerCase().includes(search) ||
+      order.id?.toLowerCase().includes(search) ||
+      order.deliveryAddress?.toLowerCase().includes(search)
+    );
   });
 
   return (
@@ -109,6 +120,22 @@ export default function AdminOrders() {
           </Select>
         </div>
       </div>
+
+      {/* شريط البحث */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="البحث في الطلبات (الاسم، الهاتف، رقم الطلب، العنوان)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10"
+              data-testid="input-search-orders"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Orders Grid */}
       <div className="space-y-4">

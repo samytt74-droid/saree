@@ -48,6 +48,7 @@ export const restaurants = pgTable("restaurants", {
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
   image: text("image").notNull(), // تم تغيير إلى notNull
+  phone: varchar("phone", { length: 20 }), // إضافة رقم هاتف المطعم
   rating: varchar("rating", { length: 10 }).default("0.0"),
   reviewCount: integer("review_count").default(0),
   deliveryTime: varchar("delivery_time", { length: 50 }).notNull(), // تم تغيير إلى notNull
@@ -107,6 +108,8 @@ export const orders = pgTable("orders", {
   customerEmail: varchar("customer_email", { length: 100 }),
   customerId: uuid("customer_id").references(() => users.id),
   deliveryAddress: text("delivery_address").notNull(),
+  customerLocationLat: decimal("customer_location_lat", { precision: 10, scale: 8 }), // إحداثيات العميل
+  customerLocationLng: decimal("customer_location_lng", { precision: 11, scale: 8 }), // إحداثيات العميل
   notes: text("notes"),
   paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
   status: varchar("status", { length: 50 }).default("pending").notNull(),

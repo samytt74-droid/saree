@@ -537,6 +537,7 @@ export class MemStorage implements IStorage {
     createdAt: new Date(),
     updatedAt: new Date(),
     description: restaurant.description ?? null,
+    phone: restaurant.phone ?? null,
     rating: restaurant.rating ?? "0.0",
     reviewCount: restaurant.reviewCount ?? 0,
     isOpen: restaurant.isOpen ?? true,
@@ -566,6 +567,7 @@ async updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promi
   // معالجة الخصائص لتجنب undefined
   const updates: Partial<Restaurant> = {};
   
+  if (restaurant.phone !== undefined) updates.phone = restaurant.phone ?? null;
   if (restaurant.openingTime !== undefined) updates.openingTime = restaurant.openingTime ?? null;
   if (restaurant.closingTime !== undefined) updates.closingTime = restaurant.closingTime ?? null;
   if (restaurant.workingDays !== undefined) updates.workingDays = restaurant.workingDays ?? null;
@@ -651,6 +653,8 @@ async updateRestaurant(id: string, restaurant: Partial<InsertRestaurant>): Promi
       updatedAt: new Date(),
       customerEmail: order.customerEmail ?? null,
       customerId: order.customerId ?? null,
+      customerLocationLat: order.customerLocationLat ?? null,
+      customerLocationLng: order.customerLocationLng ?? null,
       notes: order.notes ?? null,
       status: order.status ?? "pending",
       estimatedTime: order.estimatedTime ?? "30-45 دقيقة",

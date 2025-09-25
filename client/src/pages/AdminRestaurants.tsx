@@ -357,6 +357,17 @@ export default function AdminRestaurants() {
                 </div>
 
                 <div>
+                  <Label htmlFor="phone">رقم هاتف المطعم</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+967xxxxxxxx"
+                    data-testid="input-restaurant-phone"
+                  />
+                </div>
+
+                <div>
                   <Label htmlFor="category">القسم</Label>
                   <Select value={formData.categoryId} onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}>
                     <SelectTrigger data-testid="select-restaurant-category">
@@ -619,6 +630,37 @@ export default function AdminRestaurants() {
                       data-testid="input-restaurant-longitude"
                     />
                   </div>
+                </div>
+                
+                {/* زر تحديد الموقع عبر الخريطة */}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const address = formData.address || formData.name;
+                      if (address) {
+                        const encodedAddress = encodeURIComponent(address);
+                        const url = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                        window.open(url, '_blank');
+                        toast({
+                          title: "تم فتح الخريطة",
+                          description: "يمكنك نسخ الإحداثيات من الخريطة وإدخالها في الحقول أعلاه",
+                        });
+                      } else {
+                        toast({
+                          title: "أدخل العنوان أولاً",
+                          description: "يرجى إدخال عنوان المطعم للبحث في الخريطة",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="flex-1"
+                    data-testid="button-open-maps"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    تحديد الموقع عبر الخريطة
+                  </Button>
                 </div>
 
                 {/* Status Flags */}

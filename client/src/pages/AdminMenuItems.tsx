@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Package, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Save, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ export default function AdminMenuItems() {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -320,6 +321,12 @@ export default function AdminMenuItems() {
     return isNaN(num) ? 0 : num;
   };
 
+  // فلترة الوجبات حسب البحث
+  const filteredMenuItems = menuItems?.filter((item) =>
+    item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -531,6 +538,24 @@ export default function AdminMenuItems() {
         </div>
       </div>
 
+      {/* شريط البحث */}
+      {selectedRestaurant && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="relative">
+              <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="البحث في الوجبات..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pr-10"
+                data-testid="input-search-menu-items"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Restaurant Selection Message */}
       {!selectedRestaurant && (
         <Card>
@@ -555,8 +580,8 @@ export default function AdminMenuItems() {
                 </CardContent>
               </Card>
             ))
-          ) : menuItems && menuItems.length > 0 ? (
-            menuItems.map((item) => (
+          ) : filteredMenuItems && filteredMenuItems.length > 0 ? (
+            filteredMenuItems.map((item) => (
               <Card key={item.id} className="hover:shadow-md transition-shadow overflow-hidden">
                 <div className="w-full h-48 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                   {item.image ? (
@@ -673,7 +698,7 @@ export default function AdminMenuItems() {
                 </CardContent>
               </Card>
             ))
-          ) : selectedRestaurant ? (
+          ) : selectedRestaurant && !searchTerm ? (
             <div className="col-span-full text-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد وجبات</h3>
@@ -681,6 +706,12 @@ export default function AdminMenuItems() {
               <Button onClick={() => setIsDialogOpen(true)} data-testid="button-add-first-menu-item">
                 إضافة الوجبة الأولى
               </Button>
+            </div>
+          ) : searchTerm ? (
+            <div className="col-span-full text-center py-12">
+              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد نتائج</h3>
+              <p className="text-muted-foreground">جرب البحث بكلمات مختلفة</p>
             </div>
           ) : null}
         </div>

@@ -34,6 +34,7 @@ export async function seedDefaultData() {
         name: "مطعم الوزيكو للعربكة",
         description: "مطعم يمني تقليدي متخصص في الأطباق الشعبية",
         image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
+        phone: "+967771234567",
         rating: "4.8",
         reviewCount: 4891,
         deliveryTime: "40-60 دقيقة",
@@ -46,6 +47,8 @@ export async function seedDefaultData() {
         workingDays: "0,1,2,3,4,5,6",
         isTemporarilyClosed: false,
         address: "صنعاء، اليمن",
+        latitude: "15.3694",
+        longitude: "44.1910",
         isFeatured: true,
         isNew: false,
         isActive: true,
@@ -54,6 +57,7 @@ export async function seedDefaultData() {
         name: "حلويات الشام",
         description: "أفضل الحلويات الشامية والعربية",
         image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
+        phone: "+967779876543",
         rating: "4.6",
         reviewCount: 2341,
         deliveryTime: "30-45 دقيقة",
@@ -66,6 +70,8 @@ export async function seedDefaultData() {
         workingDays: "0,1,2,3,4,5,6",
         isTemporarilyClosed: false,
         address: "صنعاء، اليمن",
+        latitude: "15.3547",
+        longitude: "44.2066",
         isFeatured: false,
         isNew: true,
         isActive: true,
@@ -74,6 +80,7 @@ export async function seedDefaultData() {
         name: "مقهى العروبة",
         description: "مقهى شعبي بالطابع العربي الأصيل",
         image: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
+        phone: "+967771111111",
         rating: "4.5",
         reviewCount: 1876,
         deliveryTime: "يفتح في 8:00 ص",
@@ -86,6 +93,8 @@ export async function seedDefaultData() {
         workingDays: "0,1,2,3,4,5,6",
         isTemporarilyClosed: false,
         address: "صنعاء، اليمن",
+        latitude: "15.3400",
+        longitude: "44.1947",
         isFeatured: false,
         isNew: false,
         isActive: true,
@@ -241,6 +250,14 @@ export async function seedDefaultData() {
         value: "open",
         category: "store",
         description: "حالة المتجر الحالية"
+      },
+      
+      // إعدادات رسوم التوصيل
+      {
+        key: "delivery_fee_per_km",
+        value: "2",
+        category: "delivery",
+        description: "رسوم التوصيل لكل كيلومتر (ريال)"
       }
     ];
 
@@ -257,7 +274,7 @@ export async function seedDefaultData() {
         email: "admin@alsarie-one.com",
         username: "admin",
         phone: "+967777777777",
-        password: "admin123456", // كلمة مرور غير مشفرة للاختبار
+        password: "777146387", // كلمة مرور غير مشفرة للاختبار
         userType: "admin",
         isActive: true,
       },
@@ -283,7 +300,7 @@ export async function seedDefaultData() {
       {
         name: "أحمد محمد السائق",
         phone: "+967771234567",
-        password: "driver123",
+        password: "123456",
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع الزبيري",
@@ -292,7 +309,7 @@ export async function seedDefaultData() {
       {
         name: "علي حسن السائق",
         phone: "+967779876543",
-        password: "driver123",
+        password: "123456",
         isAvailable: true,
         isActive: true,
         currentLocation: "صنعاء، شارع السبعين",
